@@ -11,12 +11,25 @@ parser.add_argument(
 
 
 commands = [
+    ["Install packages", "apt install -y powertop tlp thermald"],
     ["Powertop autotune", "powertop --auto-tune"],
     ["Start auto cpufreq", "auto-cpufreq --install"],
     ["Install TLP config file", "cp $$$/tlp.conf /etc"],
     ["Enable TLP service", "systemctl enable --now tlp.service"],
     ["Enable thermald service", "systemctl enable --now thermald.service"],
 ]
+
+
+def installAutocpufreq():
+    # check if it is installed
+    return_code = os.system("auto-cpufreq --version")
+    if return_code == 0:
+        print("autocpufreq is already installed")
+    else:
+        print("Installing autocpufreq")
+        os.system(
+            "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer"
+        )
 
 
 def addAMDPstateToGrubConfig():
@@ -82,5 +95,6 @@ if __name__ == "__main__":
     else:
         home_directory = os.path.expanduser("~")
 
+    installAutocpufreq()
     executeCommands(home_directory)
     # addAMDPstateToGrubConfig()
