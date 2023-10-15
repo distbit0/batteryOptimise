@@ -83,4 +83,4 @@ if __name__ == "__main__":
         home_directory = os.path.expanduser("~")
 
     executeCommands(home_directory)
-    addAMDPstateToGrubConfig()
+    # addAMDPstateToGrubConfig()
