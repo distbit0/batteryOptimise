@@ -28,7 +28,7 @@ def installAutocpufreq():
     else:
         print("Installing autocpufreq")
         os.system(
-            "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer"
+            "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer; cd .. && rm -rf auto-cpufreq"
         )
 
 
