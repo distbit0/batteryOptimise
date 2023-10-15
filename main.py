@@ -9,14 +9,18 @@ parser.add_argument(
     "--username", default=None, help="Specify username to construct home directory path"
 )
 
-
 commands = [
-    ["Install packages", "apt install -y powertop tlp thermald"],
+    ["Install packages", "apt install -y powertop tlp thermald laptop-mode-tools"],
     ["Powertop autotune", "powertop --auto-tune"],
     ["Start auto cpufreq", "auto-cpufreq --install"],
     ["Install TLP config file", "cp $$$/tlp.conf /etc"],
+    [
+        "Install laptop mode config files",
+        "cp $$$/laptop-mode.conf /etc/laptop-mode/; cp $$$/laptop-mode-cpufreq.conf /etc/laptop-mode/conf.d/cpufreq.conf",
+    ],
     ["Enable TLP service", "systemctl enable --now tlp.service"],
     ["Enable thermald service", "systemctl enable --now thermald.service"],
+    ["Enable laptop mode service", "systemctl enable --now laptop-mode.service"],
 ]
 
 
@@ -89,6 +93,11 @@ def executeCommands(home_directory):
 
 if __name__ == "__main__":
     args = parser.parse_args()
+
+    # abort if not run with sudo
+    if not os.geteuid() == 0:
+        print("This script must be run as root")
+        exit(1)
 
     if args.username:
         home_directory = f"/home/{args.username}"
