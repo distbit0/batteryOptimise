@@ -11,68 +11,6 @@ parser.add_argument(
 
 
 commands = [
-    [
-        "Change laptop mode to improve disk idleness",
-        "echo 5 > /proc/sys/vm/laptop_mode",
-    ],
-    [
-        "Disable Non-Maskable Interrupt watchdog",
-        "echo 0 > /proc/sys/kernel/nmi_watchdog",
-    ],
-    [
-        "Set power-saving mode for Intel HD audio",
-        "echo 1 > /sys/module/snd_hda_intel/parameters/power_save",
-    ],
-    [
-        "Control power-saving for Intel HD audio controller",
-        "echo Y > /sys/module/snd_hda_intel/parameters/power_save_controller",
-    ],
-    [
-        "(Commented) Set multicore power saving",
-        "#echo 1 > /sys/devices/system/cpu/sched_mc_power_savings",
-    ],
-    [
-        "(Commented) Set CPU frequency scaling to ondemand",
-        "#echo ondemand | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor",
-    ],
-    [
-        "Set CPU frequency scaling to powersave",
-        "echo powersave | tee /sys/devices/system/cpu/cpu*/cpufreq/scaling_governor",
-    ],
-    ["Set dirty writeback time", "echo 1500 > /proc/sys/vm/dirty_writeback_centisecs"],
-    [
-        "(Commented) Set PCIe power management policy to powersupersave",
-        "#echo powersupersave > /sys/module/pcie_aspm/parameters/policy",
-    ],
-    [
-        "Set PCIe power management policy to powersave",
-        "echo powersave > /sys/module/pcie_aspm/parameters/policy",
-    ],
-    [
-        "(Commented) Set USB autosuspend",
-        "#for i in /sys/bus/usb/devices/*/power/autosuspend; do echo 1 > $i; done",
-    ],
-    [
-        "(Commented) Set PCI device power level",
-        "#for i in /sys/bus/pci/devices/*/power_level ; do echo 5 > $i ; done 2>/dev/null",
-    ],
-    [
-        "Adjust power states on Ryzen CPUs",
-        "/home/pimania/apps/RyzenAdj/build/ryzenadj -a 15000 -b 30000 -c 20000 --power-saving",
-    ],
-    [
-        "Set GPU power state to battery",
-        "echo battery > /sys/class/drm/card0/device/power_dpm_state",
-    ],
-    [
-        "Force GPU specific performance level",
-        "echo manual > /sys/class/drm/card0/device/power_dpm_force_performance_level",
-    ],
-    [
-        "Set GPU power profile mode",
-        "echo 2 > /sys/class/drm/card0/device/pp_power_profile_mode",
-    ],
-    ["Disable CPU boosting", "echo 0 > /sys/devices/system/cpu/cpufreq/boost"],
     ["Powertop autotune", "powertop --auto-tune"],
     ["Start auto cpufreq", "auto-cpufreq --install"],
     ["Install TLP config file", "cp $$$/tlp.conf /etc"],
@@ -82,8 +20,11 @@ commands = [
 
 
 def addAMDPstateToGrubConfig():
-    # check if if it is configured
-    if "amd_pstate" in open("/etc/default/grub").read():
+    if (
+        "amd_pstate" in open("/etc/default/grub").read()
+        or "pstate"
+        in open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver").read()
+    ):
         print("AMD P-State already configured")
         return
     else:
@@ -92,8 +33,7 @@ def addAMDPstateToGrubConfig():
             if "GRUB_CMDLINE_LINUX_DEFAULT" in line:
                 value = line.split("=")[1][1:-1]
                 newValue = (
-                    value
-                    + " amd_pstate=passive initcall_blacklist=acpi_cpufreq_init amd_pstate.shared_mem=1"
+                    value + " amd_pstate=guided initcall_blacklist=acpi_cpufreq_init"
                 )
                 reconstructedConfig.append(f'GRUB_CMDLINE_LINUX_DEFAULT="{newValue}"')
             else:
