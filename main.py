@@ -10,17 +10,20 @@ parser.add_argument(
 )
 
 commands = [
-    ["Install packages", "apt install -y powertop tlp thermald laptop-mode-tools"],
+    [
+        "Install packages",
+        "apt install -y powertop tlp thermald ",
+    ],  # laptop-mode-tools"], do not install laptop mode tools as it conflicts with tlp
     ["Powertop autotune", "powertop --auto-tune"],
     ["Start auto cpufreq", "auto-cpufreq --install"],
     ["Install TLP config file", "cp $$$/tlp.conf /etc"],
-    [
-        "Install laptop mode config files",
-        "cp $$$/laptop-mode.conf /etc/laptop-mode/; cp $$$/laptop-mode-cpufreq.conf /etc/laptop-mode/conf.d/cpufreq.conf",
-    ],
+    # [
+    #     "Install laptop mode config files",
+    #     "cp $$$/laptop-mode.conf /etc/laptop-mode/; cp $$$/laptop-mode-cpufreq.conf /etc/laptop-mode/conf.d/cpufreq.conf",
+    # ],
     ["Enable TLP service", "systemctl enable --now tlp.service"],
     ["Enable thermald service", "systemctl enable --now thermald.service"],
-    ["Enable laptop mode service", "systemctl enable --now laptop-mode.service"],
+    # ["Enable laptop mode service", "systemctl enable --now laptop-mode.service"],
 ]
 
 
