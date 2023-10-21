@@ -11,10 +11,6 @@ parser.add_argument(
 
 commands = [
     [
-        "Install packages",
-        "apt install -y powertop laptop-mode-tools",
-    ],  # tlp"], do not install laptop mode tools as it conflicts with tlp
-    [
         "Install laptop mode config files",
         "cp $$$/laptop-mode.conf /etc/laptop-mode/; cp $$$/laptop-mode-cpufreq.conf /etc/laptop-mode/conf.d/cpufreq.conf",
     ],
