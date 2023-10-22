@@ -10,16 +10,16 @@ parser.add_argument(
 )
 
 commands = [
-    [
-        "Install laptop mode config files",
-        "cp $$$/laptop-mode.conf /etc/laptop-mode/; cp $$$/laptop-mode-cpufreq.conf /etc/laptop-mode/conf.d/cpufreq.conf",
-    ],
+    # [
+    #     "Install laptop mode config files",
+    #     "cp $$$/laptop-mode.conf /etc/laptop-mode/; cp $$$/laptop-mode-cpufreq.conf /etc/laptop-mode/conf.d/cpufreq.conf",
+    # ],
     ["Powertop autotune", "powertop --auto-tune"],
     ["Start auto cpufreq", "auto-cpufreq --install"],
     ["Install TLP config file", "cp $$$/tlp.conf /etc"],
-    # ["Enable TLP service", "systemctl enable --now tlp.service"],
+    ["Enable TLP service", "systemctl enable --now tlp.service"],
     # ["Enable thermald service", "systemctl enable --now thermald.service"], does not work on amd
-    ["Enable laptop mode service", "systemctl enable --now laptop-mode.service"],
+    # ["Enable laptop mode service", "systemctl enable --now laptop-mode.service"],
 ]
 
 
