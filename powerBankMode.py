@@ -85,11 +85,11 @@ def main():
 
     if mode == "keyboard":
         if not is_past_timestamp():
-            show_notification_for_one_second("AUTO")
+            print("Setting to AUTO mode.")
             set_power_mode("auto")
             save_relative_timestamp(-3)
         else:
-            show_notification_for_one_second("BAT")
+            print("Setting to BATTERY mode.")
             set_power_mode("bat")
             save_relative_timestamp(3)
     elif mode == "cron":
