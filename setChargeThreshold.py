@@ -3,7 +3,7 @@ import os
 import subprocess
 
 batteryName = "BATT"
-defaultThreshold = 60
+defaultThreshold = 80
 fullThreshold = 100
 
 
