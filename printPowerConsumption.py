@@ -32,7 +32,7 @@ else:
 # Round both values to one decimal place
 power_consumption_rounded = round(power_consumption, 1)
 time_remaining_rounded = round(time_remaining, 1)
-if time_remaining_rounded > 30:
+if time_remaining_rounded > 20:
     time_remaining_rounded = float("inf")
 
 print(f"{power_consumption_rounded} W | {time_remaining_rounded} H")
