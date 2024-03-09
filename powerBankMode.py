@@ -2,8 +2,6 @@ import sys
 import subprocess
 from datetime import datetime, timedelta
 from os import path
-import tkinter as tk
-from tkinter import font as tkFont
 
 
 def getAbsPath(relPath):
