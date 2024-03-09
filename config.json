@@ -1,5 +1,5 @@
 {
-    "home_directory": "/home/username",
+    "home_directory": "/home/pimania",
     "setAMDPstate": false,
     "battery_mode": {
         "last_execution_time": 1710013256.6618004,
@@ -13,7 +13,7 @@
         ]
     },
     "ac_mode": {
-        "last_execution_time": 1710013238.75785,
+        "last_execution_time": 1710013476.8604858,
         "execution_interval": 1800,
         "commands": [
             "echo 3 > /sys/class/leds/asus::kbd_backlight/brightness",
