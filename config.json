@@ -1,51 +1,51 @@
 {
-    "home_directory": "/home/pimania",
-    "last_execution_mode": true,
-    "setAMDPstate": false,
-    "battery_mode": {
-        "last_execution_time": 1710070659.6206448,
-        "execution_interval": 1800,
-        "commands": [
-            [
-                "echo 0 > /sys/class/leds/asus::kbd_backlight/brightness",
-                1
-            ],
-            [
-                "powertop --auto-tune",
-                10
-            ],
-            [
-                "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -eq $(cat /sys/class/backlight/amdgpu_bl1/max_brightness) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness",
-                1
-            ],
-            [
-                "cp $$$/tlp.conf /etc",
-                1
-            ],
-            [
-                "systemctl enable --now tlp.service",
-                6
-            ]
-        ]
-    },
-    "ac_mode": {
-        "last_execution_time": 1710070331.4777615,
-        "execution_interval": 1800,
-        "commands": [
-            [
-                "echo 3 > /sys/class/leds/asus::kbd_backlight/brightness",
-                2
-            ],
-            [
-                "echo 255 | tee /sys/class/backlight/amdgpu_bl1/brightness",
-                2
-            ]
-        ]
-    },
-    "batteryCheckCommands": {
-        "acpi -b": "discharging",
-        "tlp-stat -s": "battery",
-        "auto-cpufreq --stats": "powersave",
-        "cat /sys/class/power_supply/ACAD/online": "0"
-    }
+  "home_directory": "/home/pimania",
+  "last_execution_mode": false,
+  "setAMDPstate": false,
+  "battery_mode": {
+    "last_execution_time": 1710070659.6206448,
+    "execution_interval": 1800,
+    "commands": [
+      [
+        "echo 0 > /sys/class/leds/asus::kbd_backlight/brightness",
+        1
+      ],
+      [
+        "powertop --auto-tune",
+        10
+      ],
+      [
+        "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -eq $(cat /sys/class/backlight/amdgpu_bl1/max_brightness) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness",
+        1
+      ],
+      [
+        "cp $$$/tlp.conf /etc",
+        1
+      ],
+      [
+        "systemctl enable --now tlp.service",
+        6
+      ]
+    ]
+  },
+  "ac_mode": {
+    "last_execution_time": 1710070331.4777615,
+    "execution_interval": 1800,
+    "commands": [
+      [
+        "echo 3 > /sys/class/leds/asus::kbd_backlight/brightness",
+        2
+      ],
+      [
+        "echo 255 | tee /sys/class/backlight/amdgpu_bl1/brightness",
+        2
+      ]
+    ]
+  },
+  "batteryCheckCommands": {
+    "acpi -b": "discharging",
+    "tlp-stat -s": "battery",
+    "auto-cpufreq --stats": "powersave",
+    "cat /sys/class/power_supply/ACAD/online": "0"
+  }
 }
