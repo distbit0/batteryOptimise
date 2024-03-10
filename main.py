@@ -3,6 +3,8 @@ import json
 import time
 import subprocess
 from os import path
+import sys
+import traceback
 
 
 def getAbsPath(relPath):
@@ -11,21 +13,29 @@ def getAbsPath(relPath):
     return fullPath
 
 
+def execute_command(command):
+    try:
+        output = (
+            subprocess.check_output(command, shell=True, timeout=2).decode().strip()
+        )
+    except Exception as e:
+        print("Command execution error:", sys.exc_info()[0], command)
+        # traceback.print_exc()
+        output = e.output.decode().strip() if e.output else ""
+    return output
+
+
 def is_on_battery():
-    battery_info = subprocess.check_output(["acpi", "-b"]).decode("utf-8")
-    return "Discharging" in battery_info
+    commands = read_config("config.json")["batteryCheckCommands"]
+    for command in commands:
+        if commands[command].lower() in execute_command(command).lower():
+            return True
+    return False
 
 
 def is_executed_recently(last_execution_time, execution_interval):
     current_time = time.time()
     return current_time - last_execution_time < execution_interval
-
-
-def execute_command(command):
-    print(f"Executing: {command}")
-    return_code = os.system(command)
-    if return_code != 0:
-        print(f"Error: Command returned with code {return_code}")
 
 
 def read_config(config_file):
@@ -93,8 +103,12 @@ def main():
 
     last_execution_time = mode_config["last_execution_time"]
     execution_interval = mode_config["execution_interval"]
+    last_battery_mode = config["last_execution_mode"]
 
-    if is_executed_recently(last_execution_time, execution_interval):
+    if (
+        is_executed_recently(last_execution_time, execution_interval)
+        and last_battery_mode == battery_mode
+    ):
         print(
             f"Commands have been executed recently in {'battery' if battery_mode else 'AC'} mode. Exiting."
         )
@@ -109,6 +123,7 @@ def main():
     execute_commands(commands)
 
     mode_config["last_execution_time"] = time.time()
+    config["last_execution_mode"] = battery_mode
     write_config(config_file, config)
 
 
