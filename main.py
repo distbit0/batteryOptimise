@@ -5,6 +5,7 @@ import subprocess
 from os import path
 import sys
 import traceback
+import pysnooper
 
 
 def getAbsPath(relPath):
@@ -13,14 +14,18 @@ def getAbsPath(relPath):
     return fullPath
 
 
-def execute_command(command):
+def execute_command(command, timeout=2):
+    timeout = int(timeout)
     try:
         output = (
-            subprocess.check_output(command, shell=True, timeout=2).decode().strip()
+            subprocess.check_output(command, shell=True, timeout=timeout)
+            .decode()
+            .strip()
         )
     except Exception as e:
-        print("Command execution error:", sys.exc_info()[0], command)
-        # traceback.print_exc()
+        if not sys.exc_info()[0] == subprocess.TimeoutExpired:
+            print("Command execution error:", sys.exc_info()[0], command)
+            # traceback.print_exc()
         output = e.output.decode().strip() if e.output else ""
     return output
 
@@ -50,7 +55,8 @@ def write_config(config_file, config):
 
 def execute_commands(commands):
     for command in commands:
-        execute_command(command)
+        command, timeout = command
+        execute_command(command, timeout)
 
 
 def install_auto_cpufreq():
@@ -95,22 +101,17 @@ def replace_placeholders(command, config):
 
 
 def main():
-    config_file = "config.json"
-    config = read_config(config_file)
-
+    config = read_config("config.json")
     battery_mode = is_on_battery()
     mode_config = config["battery_mode"] if battery_mode else config["ac_mode"]
 
-    last_execution_time = mode_config["last_execution_time"]
-    execution_interval = mode_config["execution_interval"]
+    # last_execution_time = mode_config["last_execution_time"]
+    # execution_interval = mode_config["execution_interval"]
     last_battery_mode = config["last_execution_mode"]
 
-    if (
-        is_executed_recently(last_execution_time, execution_interval)
-        and last_battery_mode == battery_mode
-    ):
+    if last_battery_mode == battery_mode:
         print(
-            f"Commands have been executed recently in {'battery' if battery_mode else 'AC'} mode. Exiting."
+            f"This command was last executed in {'battery' if battery_mode else 'AC'} mode. Which is the same as the current mode. Exiting."
         )
         exit(0)
 
@@ -119,12 +120,15 @@ def main():
         if config["setAMDPstate"]:
             add_amd_pstate_to_grub_config()
 
-    commands = [replace_placeholders(cmd, config) for cmd in mode_config["commands"]]
+    commands = [
+        [replace_placeholders(cmd[0], config), cmd[1]]
+        for cmd in mode_config["commands"]
+    ]
     execute_commands(commands)
 
-    mode_config["last_execution_time"] = time.time()
+    # mode_config["last_execution_time"] = time.time()
     config["last_execution_mode"] = battery_mode
-    write_config(config_file, config)
+    write_config("config.json", config)
 
 
 if __name__ == "__main__":
