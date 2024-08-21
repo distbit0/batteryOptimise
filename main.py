@@ -103,7 +103,7 @@ def replace_placeholders(command, config):
 
 def main():
     config = read_config("config.json")
-    battery_mode = is_on_battery()
+    battery_mode = is_on_battery() or config["alwaysUseBatteryMode"]
     mode_config = config["battery_mode"] if battery_mode else config["ac_mode"]
 
     # last_execution_time = mode_config["last_execution_time"]
