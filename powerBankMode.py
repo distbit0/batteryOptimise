@@ -36,11 +36,19 @@ def save_relative_timestamp(hours):
 def is_past_timestamp():
     """
     Check if the current time is past the saved timestamp.
+    Returns True only once, then updates the file to prevent future True returns.
     """
     try:
         with open(timestamp_file, "r") as file:
-            saved_time = datetime.strptime(file.read().strip(), "%Y-%m-%d %H:%M:%S")
-            return datetime.now() > saved_time
+            saved_time = file.read().strip()
+            if saved_time == "":
+                return False
+            saved_time = datetime.strptime(saved_time, "%Y-%m-%d %H:%M:%S")
+            if datetime.now() > saved_time:
+                with open(timestamp_file, "w") as write_file:
+                    write_file.write("")
+                return True
+            return False
     except FileNotFoundError:
         return False  # No timestamp file found, default to False
 
