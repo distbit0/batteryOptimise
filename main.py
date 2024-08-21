@@ -17,6 +17,7 @@ def getAbsPath(relPath):
 def execute_command(command, timeout=2):
     timeout = int(timeout)
     try:
+        print("Executing command:", command)
         output = (
             subprocess.check_output(command, shell=True, timeout=timeout)
             .decode()
