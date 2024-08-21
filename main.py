@@ -103,20 +103,20 @@ def replace_placeholders(command, config):
 
 def main():
     config = read_config("config.json")
-    battery_mode = is_on_battery() or config["alwaysUseBatteryMode"]
-    mode_config = config["battery_mode"] if battery_mode else config["ac_mode"]
+    current_battery_mode = is_on_battery() or config["alwaysUseBatteryMode"]
+    mode_config = config["battery_mode"] if current_battery_mode else config["ac_mode"]
 
     # last_execution_time = mode_config["last_execution_time"]
     # execution_interval = mode_config["execution_interval"]
     last_battery_mode = config["last_execution_mode"]
 
-    if last_battery_mode == battery_mode:
+    if last_battery_mode == current_battery_mode:
         print(
-            f"This command was last executed in {'battery' if battery_mode else 'AC'} mode. Which is the same as the current mode. Exiting."
+            f"This command was last executed in {'battery' if current_battery_mode else 'AC'} mode. Which is the same as the current mode. Exiting."
         )
         exit(0)
 
-    if battery_mode:
+    if current_battery_mode:
         install_auto_cpufreq()
         if config["setAMDPstate"]:
             add_amd_pstate_to_grub_config()
@@ -128,7 +128,7 @@ def main():
     execute_commands(commands)
 
     # mode_config["last_execution_time"] = time.time()
-    config["last_execution_mode"] = battery_mode
+    config["last_execution_mode"] = current_battery_mode
     write_config("config.json", config)
 
 
