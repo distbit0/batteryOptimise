@@ -17,18 +17,21 @@ def getAbsPath(relPath):
 def execute_command(command, timeout=2):
     timeout = int(timeout)
     try:
-        print("Executing command:", command)
-        output = (
-            subprocess.check_output(command, shell=True, timeout=timeout)
-            .decode()
-            .strip()
+        print("\nExecuting command:", command)
+        result = subprocess.run(
+            command, shell=True, timeout=timeout, text=True, capture_output=True
         )
+        output = result.stdout.strip()
+        if result.returncode != 0:
+            print(f"Command exited with non-zero status: {result.returncode}")
+            print(f"Error output: {result.stderr.strip()}")
+    except subprocess.TimeoutExpired as e:
+        print(f"Command timed out after {timeout} seconds")
+        output = e.stdout if e.stdout else ""
     except Exception as e:
-        if not sys.exc_info()[0] == subprocess.TimeoutExpired:
-            print("Command execution error:", sys.exc_info()[0], command)
-            # traceback.print_exc()
-        output = e.output.decode().strip() if e.output else ""
-    return output
+        print(f"Command execution error: {type(e).__name__}", file=sys.stderr)
+        output = ""
+    return output if type(output) == str else ""
 
 
 def is_on_battery():

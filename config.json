@@ -8,11 +8,11 @@
         "execution_interval": 1800,
         "commands": [
             [
-                "[ $(cat /sys/class/leds/asus::kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/asus::kbd_backlight/brightness",
+                "[ $(cat /sys/class/leds/asus::kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/asus::kbd_backlight/brightness || :",
                 1
             ],
             [
-                "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -gt $(($(cat /sys/class/backlight/amdgpu_bl1/max_brightness) * 85 / 100)) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness # so that we do not clobber a custom brightness value",
+                "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -gt $(($(cat /sys/class/backlight/amdgpu_bl1/max_brightness) * 85 / 100)) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness || : # so that we do not clobber a custom brightness value",
                 2
             ],
             [
