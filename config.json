@@ -12,10 +12,6 @@
                 1
             ],
             [
-                "powertop --auto-tune",
-                10
-            ],
-            [
                 "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -gt $(($(cat /sys/class/backlight/amdgpu_bl1/max_brightness) * 85 / 100)) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness # so that we do not clobber a custom brightness value",
                 2
             ],
@@ -26,6 +22,14 @@
             [
                 "systemctl enable --now tlp.service",
                 6
+            ],
+            [
+                "sudo tlp bat",
+                5
+            ],
+            [
+                "sudo auto-cpufreq --force=powersave",
+                5
             ]
         ]
     },
@@ -40,13 +44,20 @@
             [
                 "echo 255 | tee /sys/class/backlight/amdgpu_bl1/brightness",
                 2
+            ],
+            [
+                "sudo tlp start",
+                5
+            ],
+            [
+                "sudo auto-cpufreq --force=reset",
+                5
             ]
         ]
     },
     "batteryCheckCommands": {
         "cat /sys/class/power_supply/ACAD/online": "0",
         "acpi -b": "discharging",
-        "tlp-stat -s": "battery",
-        "auto-cpufreq --stats": "powersave"
+        "tlp-stat -s": "battery"
     }
 }

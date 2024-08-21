@@ -61,7 +61,8 @@ def execute_commands(commands):
 
 
 def install_auto_cpufreq():
-    return_code = os.system("auto-cpufreq --version")
+    output = execute_command("auto-cpufreq --version")
+    return_code = 1 if output == "" else 0
     if return_code == 0:
         print("auto-cpufreq is already installed")
     else:
@@ -69,6 +70,13 @@ def install_auto_cpufreq():
         execute_command(
             "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer; cd .. && rm -rf auto-cpufreq"
         )
+    output = execute_command("auto-cpufreq --stats")
+    return_code = 1 if "auto-cpufreq not running" in output else 0
+    if return_code == 0:
+        print("auto-cpufreq is already installed")
+    else:
+        print("Installing auto-cpufreq")
+        execute_command("sudo auto-cpufreq --install")
 
 
 def add_amd_pstate_to_grub_config():
