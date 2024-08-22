@@ -1,4 +1,7 @@
 import os
+import time
+from datetime import datetime, timedelta
+
 import json
 import time
 import subprocess
@@ -86,6 +89,34 @@ def replace_placeholders(command, config):
     return command.replace("$$$", getAbsPath("")).replace("~", config["home_directory"])
 
 
+def should_execute(config, current_execution_mode):
+    last_execution_mode = config["last_execution_mode"]
+    last_execution_time = config.get("last_execution_time")
+
+    # Define the minimum time interval between executions (e.g., 1 hour)
+    min_interval = timedelta(hours=1)
+
+    # Check if sufficient time has elapsed or if the execution mode has changed
+    current_time = datetime.now()
+    time_elapsed = (
+        current_time - datetime.fromisoformat(last_execution_time)
+        if last_execution_time
+        else min_interval  # Ensure it runs on first execution
+    )
+
+    mode_changed = last_execution_mode != current_execution_mode
+    time_elapsed_sufficient = time_elapsed >= min_interval
+
+    if not (mode_changed or time_elapsed_sufficient):
+        print(
+            f"Last executed {time_elapsed.total_seconds() / 3600:.2f} hours ago. "
+            f"Current mode is the same and not enough time has elapsed. Exiting."
+        )
+        return False, current_time, time_elapsed
+
+    return True, current_time, time_elapsed
+
+
 def main():
     config = read_config("config.json")
     isOnBattery = is_on_battery()
@@ -97,21 +128,19 @@ def main():
         if alwaysBrightnessBatteryMode or isOnBattery
         else config["ac_mode"]["commands"]["brightness"]
     )
-
     cpuCommands = (
         config["battery_mode"]["commands"]["cpu"]
         if alwaysCpuBatteryMode or isOnBattery
         else config["ac_mode"]["commands"]["cpu"]
     )
 
-    last_execution_mode = config["last_execution_mode"]
     currentExecutionMode = (
         str(isOnBattery) + str(alwaysCpuBatteryMode) + str(alwaysBrightnessBatteryMode)
     )
-    if last_execution_mode == currentExecutionMode:
-        print(
-            f"This command was last executed in {'battery' if isOnBattery else 'AC'} mode. Which is the same as the current mode. Exiting."
-        )
+
+    execute, current_time, time_elapsed = should_execute(config, currentExecutionMode)
+
+    if not execute:
         exit(0)
 
     if isOnBattery:
@@ -124,8 +153,14 @@ def main():
         ]
     )
 
+    # Update the last execution mode and time in the config
     config["last_execution_mode"] = currentExecutionMode
+    config["last_execution_time"] = current_time.isoformat()
     write_config("config.json", config)
+
+    print(
+        f"Executed in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
+    )
 
 
 if __name__ == "__main__":
