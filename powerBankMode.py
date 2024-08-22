@@ -1,5 +1,5 @@
 import sys
-import subprocess
+import json
 from datetime import datetime, timedelta
 from os import path
 
@@ -10,18 +10,35 @@ def getAbsPath(relPath):
     return fullPath
 
 
-def set_power_mode(mode):
+def update_config(mode):
     """
-    Set the power mode for both tlp and auto-cpufreq.
+    Update the config.json file based on the power mode.
     """
+    config_file = getAbsPath("config.json")
+    with open(config_file, "r") as file:
+        config = json.load(file)
+
     if mode == "bat":
-        subprocess.run(["sudo", "tlp", "bat"])
-        subprocess.run(["sudo", "auto-cpufreq", "--force=powersave"])
+        config["alwaysCpuBatteryMode"] = True
+        config["alwaysBrightnessBatteryMode"] = True
+        config["last_auto_state"] = {
+            "alwaysCpuBatteryMode": config.get("alwaysCpuBatteryMode", False),
+            "alwaysBrightnessBatteryMode": config.get(
+                "alwaysBrightnessBatteryMode", False
+            ),
+        }
     elif mode == "auto":
-        subprocess.run(["sudo", "tlp", "start"])
-        subprocess.run(["sudo", "auto-cpufreq", "--force=reset"])
-    else:
-        print(f"Unknown mode: {mode}")
+        if "last_auto_state" in config:
+            config["alwaysCpuBatteryMode"] = config["last_auto_state"][
+                "alwaysCpuBatteryMode"
+            ]
+            config["alwaysBrightnessBatteryMode"] = config["last_auto_state"][
+                "alwaysBrightnessBatteryMode"
+            ]
+            del config["last_auto_state"]
+
+    with open(config_file, "w") as file:
+        json.dump(config, file, indent=2)
 
 
 def save_relative_timestamp(hours):
@@ -63,15 +80,15 @@ def main():
     if mode == "keyboard":
         if not is_past_timestamp():
             print("Setting to AUTO mode.")
-            set_power_mode("auto")
+            update_config("auto")
             save_relative_timestamp(-3)
         else:
             print("Setting to BATTERY mode.")
-            set_power_mode("bat")
+            update_config("bat")
             save_relative_timestamp(3)
     elif mode == "cron":
         if is_past_timestamp():
-            set_power_mode("auto")
+            update_config("auto")
     else:
         print("Invalid mode. Use 'keyboard' or 'cron'.")
 

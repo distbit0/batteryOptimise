@@ -71,7 +71,7 @@ def install_auto_cpufreq():
     else:
         print("Installing auto-cpufreq")
         execute_command(
-            "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer; cd .. && rm -rf auto-cpufreq"
+            "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer && cd .. && rm -rf auto-cpufreq"
         )
     output = execute_command("auto-cpufreq --stats")
     return_code = 1 if "auto-cpufreq not running" in output else 0
@@ -82,64 +82,49 @@ def install_auto_cpufreq():
         execute_command("sudo auto-cpufreq --install")
 
 
-def add_amd_pstate_to_grub_config():
-    grub_file = "/etc/default/grub"
-    if (
-        "amd_pstate" in open(grub_file).read()
-        or "pstate"
-        in open("/sys/devices/system/cpu/cpu0/cpufreq/scaling_driver").read()
-    ):
-        print("AMD P-State already configured")
-        return
-
-    reconstructed_config = []
-    for line in open(grub_file).read().split("\n"):
-        if "GRUB_CMDLINE_LINUX_DEFAULT" in line:
-            value = line.split("=")[1][1:-1]
-            new_value = (
-                value + " amd_pstate=guided initcall_blacklist=acpi_cpufreq_init"
-            )
-            reconstructed_config.append(f'GRUB_CMDLINE_LINUX_DEFAULT="{new_value}"')
-        else:
-            reconstructed_config.append(line)
-
-    with open(grub_file, "w") as file:
-        file.write("\n".join(reconstructed_config))
-    execute_command("update-grub")
-
-
 def replace_placeholders(command, config):
     return command.replace("$$$", getAbsPath("")).replace("~", config["home_directory"])
 
 
 def main():
     config = read_config("config.json")
-    current_battery_mode = is_on_battery() or config["alwaysUseBatteryMode"]
-    mode_config = config["battery_mode"] if current_battery_mode else config["ac_mode"]
+    isOnBattery = is_on_battery()
+    alwaysCpuBatteryMode = config["alwaysCpuBatteryMode"]
+    alwaysBrightnessBatteryMode = config["alwaysBrightnessBatteryMode"]
 
-    # last_execution_time = mode_config["last_execution_time"]
-    # execution_interval = mode_config["execution_interval"]
-    last_battery_mode = config["last_execution_mode"]
+    brightnessCommands = (
+        config["battery_mode"]["commands"]["brightness"]
+        if alwaysBrightnessBatteryMode or isOnBattery
+        else config["ac_mode"]["commands"]["brightness"]
+    )
 
-    if last_battery_mode == current_battery_mode:
+    cpuCommands = (
+        config["battery_mode"]["commands"]["cpu"]
+        if alwaysCpuBatteryMode or isOnBattery
+        else config["ac_mode"]["commands"]["cpu"]
+    )
+
+    last_execution_mode = config["last_execution_mode"]
+    currentExecutionMode = (
+        str(isOnBattery) + str(alwaysCpuBatteryMode) + str(alwaysBrightnessBatteryMode)
+    )
+    if last_execution_mode == currentExecutionMode:
         print(
-            f"This command was last executed in {'battery' if current_battery_mode else 'AC'} mode. Which is the same as the current mode. Exiting."
+            f"This command was last executed in {'battery' if isOnBattery else 'AC'} mode. Which is the same as the current mode. Exiting."
         )
         exit(0)
 
-    if current_battery_mode:
+    if isOnBattery:
         install_auto_cpufreq()
-        if config["setAMDPstate"]:
-            add_amd_pstate_to_grub_config()
 
-    commands = [
-        [replace_placeholders(cmd[0], config), cmd[1]]
-        for cmd in mode_config["commands"]
-    ]
-    execute_commands(commands)
+    execute_commands(
+        [
+            [replace_placeholders(cmd[0], config), cmd[1]]
+            for cmd in cpuCommands + brightnessCommands
+        ]
+    )
 
-    # mode_config["last_execution_time"] = time.time()
-    config["last_execution_mode"] = current_battery_mode
+    config["last_execution_mode"] = currentExecutionMode
     write_config("config.json", config)
 
 
