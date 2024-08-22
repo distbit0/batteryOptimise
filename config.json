@@ -1,6 +1,6 @@
 {
   "home_directory": "/home/pimania",
-  "last_execution_mode": "FalseFalseFalse",
+  "last_execution_mode": "TrueFalseFalse",
   "setAMDPstate": false,
   "alwaysCpuBatteryMode": false,
   "alwaysBrightnessBatteryMode": false,
