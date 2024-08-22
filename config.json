@@ -18,7 +18,7 @@
             ],
             "cpu": [
                 [
-                    "[ $(cmp -s $$$/tlp.conf /etc/tlp.conf || echo 1) ] && cp $$$/tlp.conf /etc/tlp.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install || :",
+                    "cp $$$/tlp.conf /etc",
                     1
                 ],
                 [
@@ -30,7 +30,7 @@
                     5
                 ],
                 [
-                    "cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf",
+                    "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install || :",
                     1
                 ],
                 [
