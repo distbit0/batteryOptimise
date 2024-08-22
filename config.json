@@ -75,5 +75,7 @@
     "batteryCheckCommands": {
         "cat /sys/class/power_supply/ACAD/online": "0",
         "acpi -b": "discharging"
-    }
+    },
+    "last_execution_time": "2024-08-22T16:50:41.571107",
+    "min_execution_interval": 4
 }

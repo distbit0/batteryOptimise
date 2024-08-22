@@ -7,6 +7,7 @@ import time
 import subprocess
 from os import path
 import sys
+import psutil
 import traceback
 import pysnooper
 
@@ -94,10 +95,13 @@ def should_execute(config, current_execution_mode):
     last_execution_time = config.get("last_execution_time")
 
     # Define the minimum time interval between executions (e.g., 1 hour)
-    min_interval = timedelta(hours=1)
+    min_interval = timedelta(hours=config["min_execution_interval"])
+
+    # Get current time and system boot time
+    current_time = datetime.now()
+    boot_time = datetime.fromtimestamp(psutil.boot_time())
 
     # Check if sufficient time has elapsed or if the execution mode has changed
-    current_time = datetime.now()
     time_elapsed = (
         current_time - datetime.fromisoformat(last_execution_time)
         if last_execution_time
@@ -107,12 +111,30 @@ def should_execute(config, current_execution_mode):
     mode_changed = last_execution_mode != current_execution_mode
     time_elapsed_sufficient = time_elapsed >= min_interval
 
-    if not (mode_changed or time_elapsed_sufficient):
+    # Check if the system has rebooted since last execution
+    system_rebooted = last_execution_time is None or boot_time > datetime.fromisoformat(
+        last_execution_time
+    )
+
+    should_run = mode_changed or time_elapsed_sufficient or system_rebooted
+
+    if not should_run:
         print(
             f"Last executed {time_elapsed.total_seconds() / 3600:.2f} hours ago. "
-            f"Current mode is the same and not enough time has elapsed. Exiting."
+            f"Current mode is the same, not enough time has elapsed, "
+            f"and no system reboot detected. Exiting."
         )
         return False, current_time, time_elapsed
+
+    # If we're running due to a reboot, update the message
+    if system_rebooted:
+        print("System reboot detected. Executing...")
+    elif mode_changed:
+        print("Execution mode has changed. Executing...")
+    else:
+        print(
+            f"Sufficient time ({time_elapsed.total_seconds() / 3600:.2f} hours) has elapsed. Executing..."
+        )
 
     return True, current_time, time_elapsed
 
