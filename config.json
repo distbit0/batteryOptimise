@@ -1,81 +1,81 @@
 {
-    "home_directory": "/home/pimania",
-    "last_execution_mode": "TrueFalseFalse",
-    "setAMDPstate": false,
-    "alwaysCpuBatteryMode": true,
-    "alwaysBrightnessBatteryMode": false,
-    "battery_mode": {
-        "commands": {
-            "brightness": [
-                [
-                    "[ $(cat /sys/class/leds/asus::kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/asus::kbd_backlight/brightness || :",
-                    1
-                ],
-                [
-                    "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -gt $(($(cat /sys/class/backlight/amdgpu_bl1/max_brightness) * 85 / 100)) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness || : # so that we do not clobber a custom brightness value",
-                    2
-                ]
-            ],
-            "cpu": [
-                [
-                    "cp $$$/tlp.conf /etc",
-                    1
-                ],
-                [
-                    "systemctl enable --now tlp.service",
-                    6
-                ],
-                [
-                    "sudo tlp bat",
-                    5
-                ],
-                [
-                    "cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf",
-                    1
-                ],
-                [
-                    "sudo auto-cpufreq --force=powersave",
-                    5
-                ],
-                [
-                    "sudo powertop --auto-tune",
-                    "15"
-                ]
-            ]
-        }
-    },
-    "ac_mode": {
-        "commands": {
-            "brightness": [
-                [
-                    "echo 3 > /sys/class/leds/asus::kbd_backlight/brightness",
-                    2
-                ],
-                [
-                    "echo 255 | tee /sys/class/backlight/amdgpu_bl1/brightness",
-                    2
-                ]
-            ],
-            "cpu": [
-                [
-                    "sudo tlp start",
-                    5
-                ],
-                [
-                    "sudo auto-cpufreq --force=reset",
-                    5
-                ],
-                [
-                    "sudo powertop --auto-tune",
-                    "15"
-                ]
-            ]
-        }
-    },
-    "batteryCheckCommands": {
-        "cat /sys/class/power_supply/ACAD/online": "0",
-        "acpi -b": "discharging"
-    },
-    "last_execution_time": "2024-08-22T17:10:04.557301",
-    "min_execution_interval": 4
+  "home_directory": "/home/pimania",
+  "last_execution_mode": "TrueTrueFalse",
+  "setAMDPstate": false,
+  "alwaysCpuBatteryMode": true,
+  "alwaysBrightnessBatteryMode": false,
+  "battery_mode": {
+    "commands": {
+      "brightness": [
+        [
+          "[ $(cat /sys/class/leds/asus::kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/asus::kbd_backlight/brightness || :",
+          1
+        ],
+        [
+          "[ $(cat /sys/class/backlight/amdgpu_bl1/actual_brightness) -gt $(($(cat /sys/class/backlight/amdgpu_bl1/max_brightness) * 85 / 100)) ] && echo 130 | sudo tee /sys/class/backlight/amdgpu_bl1/brightness || : # so that we do not clobber a custom brightness value",
+          2
+        ]
+      ],
+      "cpu": [
+        [
+          "cp $$$/tlp.conf /etc",
+          1
+        ],
+        [
+          "systemctl enable --now tlp.service",
+          6
+        ],
+        [
+          "sudo tlp bat",
+          5
+        ],
+        [
+          "cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf",
+          1
+        ],
+        [
+          "sudo auto-cpufreq --force=powersave",
+          5
+        ],
+        [
+          "sudo powertop --auto-tune",
+          "15"
+        ]
+      ]
+    }
+  },
+  "ac_mode": {
+    "commands": {
+      "brightness": [
+        [
+          "echo 3 > /sys/class/leds/asus::kbd_backlight/brightness",
+          2
+        ],
+        [
+          "echo 255 | tee /sys/class/backlight/amdgpu_bl1/brightness",
+          2
+        ]
+      ],
+      "cpu": [
+        [
+          "sudo tlp start",
+          5
+        ],
+        [
+          "sudo auto-cpufreq --force=reset",
+          5
+        ],
+        [
+          "sudo powertop --auto-tune",
+          "15"
+        ]
+      ]
+    }
+  },
+  "batteryCheckCommands": {
+    "cat /sys/class/power_supply/ACAD/online": "0",
+    "acpi -b": "discharging"
+  },
+  "last_execution_time": "2024-08-22T17:12:01.059294",
+  "min_execution_interval": 4
 }
