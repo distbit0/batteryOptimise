@@ -1,8 +1,8 @@
 {
   "home_directory": "/home/pimania",
-  "last_execution_mode": "TrueTrueFalse",
+  "last_execution_mode": "FalseFalseFalse",
   "setAMDPstate": false,
-  "alwaysCpuBatteryMode": true,
+  "alwaysCpuBatteryMode": false,
   "alwaysBrightnessBatteryMode": false,
   "battery_mode": {
     "last_execution_time": 1710070659.6206448,
