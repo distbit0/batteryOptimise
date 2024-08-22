@@ -165,7 +165,7 @@ def main():
     if not execute:
         exit(0)
 
-    if isOnBattery:
+    if isOnBattery or alwaysCpuBatteryMode:
         install_auto_cpufreq()
 
     execute_commands(
