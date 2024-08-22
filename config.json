@@ -1,8 +1,8 @@
 {
     "home_directory": "/home/pimania",
-    "last_execution_mode": "FalseFalseFalse",
+    "last_execution_mode": "TrueFalseFalse",
     "setAMDPstate": false,
-    "alwaysCpuBatteryMode": false,
+    "alwaysCpuBatteryMode": true,
     "alwaysBrightnessBatteryMode": false,
     "battery_mode": {
         "commands": {
@@ -76,6 +76,6 @@
         "cat /sys/class/power_supply/ACAD/online": "0",
         "acpi -b": "discharging"
     },
-    "last_execution_time": "2024-08-22T16:50:41.571107",
+    "last_execution_time": "2024-08-22T17:10:04.557301",
     "min_execution_interval": 4
 }
