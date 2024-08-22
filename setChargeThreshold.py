@@ -2,7 +2,7 @@ import sys
 import os
 import subprocess
 
-batteryName = "BATT"
+batteryName = "BAT*"
 defaultThreshold = 80
 fullThreshold = 100
 
