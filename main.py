@@ -1,4 +1,5 @@
 import os
+import glob
 import time
 from datetime import datetime, timedelta
 
@@ -10,6 +11,17 @@ import sys
 import psutil
 import traceback
 import pysnooper
+
+
+def read_file(path):
+    matching_files = glob.glob(path)
+    if not matching_files:
+        raise FileNotFoundError(f"No files found matching the pattern: {path}")
+
+    # Use the first matching file
+    file_path = matching_files[0]
+    with open(file_path, "r") as file:
+        return file.read().strip()
 
 
 def getAbsPath(relPath):
@@ -42,7 +54,11 @@ def is_on_battery():
     commands = read_config("config.json")["batteryCheckCommands"]
     for command in commands:
         if commands[command].lower() in execute_command(command).lower():
-            return True
+            current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
+            voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
+            power_consumption = current_now * voltage_now / 10**12
+            if power_consumption > 2.5:
+                return True
     return False
 
 
