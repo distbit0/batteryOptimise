@@ -58,7 +58,7 @@ def is_on_battery():
             voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
             power_consumption = current_now * voltage_now / 10**12
             # to avoid false positives where battery is neither charging nor discharging
-            if power_consumption > 2.5:
+            if power_consumption > 2:
                 return True
     return False
 
