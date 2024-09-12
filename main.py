@@ -177,28 +177,30 @@ def main():
         str(isOnBattery) + str(alwaysCpuBatteryMode) + str(alwaysBrightnessBatteryMode)
     )
 
-    execute, current_time, time_elapsed = should_execute(config, currentExecutionMode)
-
-    if not execute:
-        exit(0)
-
-    if isOnBattery or alwaysCpuBatteryMode:
-        install_auto_cpufreq()
-
-    execute_commands(
-        [
-            [replace_placeholders(cmd[0], config), cmd[1]]
-            for cmd in cpuCommands + brightnessCommands
-        ]
+    executeCPUCommands, current_time, time_elapsed = should_execute(
+        config, currentExecutionMode
     )
 
-    # Update the last execution mode and time in the config
-    config["last_execution_mode"] = currentExecutionMode
-    config["last_execution_time"] = current_time.isoformat()
-    write_config("config.json", config)
-
-    print(
-        f"Executed in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
+    if executeCPUCommands:
+        execute_commands(
+            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in cpuCommands]
+        )
+        if isOnBattery or alwaysCpuBatteryMode:
+            install_auto_cpufreq()
+        # Update the last execution mode and time in the config
+        config["last_execution_mode"] = currentExecutionMode
+        config["last_execution_time"] = current_time.isoformat()
+        write_config("config.json", config)
+        print(
+            f"Executed ALL commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
+        )
+    else:
+        print(
+            f"Executed BRIGHTNESS commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
+        )
+    # execute brightness commands anyway
+    execute_commands(
+        [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in brightnessCommands]
     )
 
 
