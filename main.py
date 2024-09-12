@@ -198,7 +198,7 @@ def main():
         print(
             f"Executed BRIGHTNESS commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
-    # execute brightness commands anyway
+    # execute brightness commands anyway, because executing them is very non-compute-intensive, unlike cpu commands
     execute_commands(
         [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in brightnessCommands]
     )
