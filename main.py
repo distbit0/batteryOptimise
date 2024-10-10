@@ -157,14 +157,16 @@ def should_execute(config, current_execution_mode):
 
 
 def is_screen_on_and_unlocked():
-    # Check if the screen is on
-    xset_output = execute_command("xset q")
-    if "Monitor is Off" in xset_output:
+    # Check if the session is active (which implies the screen is on)
+    session_status = execute_command("loginctl show-session $(loginctl show-user $(whoami) -p Display --value) -p State --value")
+    if "active" not in session_status.lower():
         return False
 
-    # Check if the screen is unlocked
-    loginctl_output = execute_command("loginctl show-session $(loginctl | grep $(whoami) | awk '{print $1}') -p Type")
-    if "Type=tty" in loginctl_output:
+    # Check if the screen is unlocked using GNOME D-Bus interface
+    lock_status = execute_command("gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.GetActive")
+    
+    # The output will be "(false,)" if the screen is unlocked, and "(true,)" if it's locked
+    if "true" in lock_status.lower():
         return False
 
     return True
