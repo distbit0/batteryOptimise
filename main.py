@@ -156,6 +156,19 @@ def should_execute(config, current_execution_mode):
     return True, current_time, time_elapsed
 
 
+def is_screen_on_and_unlocked():
+    # Check if the screen is on
+    xset_output = execute_command("xset q")
+    if "Monitor is Off" in xset_output:
+        return False
+
+    # Check if the screen is unlocked
+    loginctl_output = execute_command("loginctl show-session $(loginctl | grep $(whoami) | awk '{print $1}') -p Type")
+    if "Type=tty" in loginctl_output:
+        return False
+
+    return True
+
 def main():
     config = read_config("config.json")
     isOnBattery = is_on_battery()
@@ -199,9 +212,10 @@ def main():
             f"Executed BRIGHTNESS commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
     # execute brightness commands anyway, because executing them is very non-compute-intensive, unlike cpu commands
-    execute_commands(
-        [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in brightnessCommands]
-    )
+    if is_screen_on_and_unlocked(): 
+        execute_commands(
+            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in brightnessCommands]
+        )
 
 
 if __name__ == "__main__":
