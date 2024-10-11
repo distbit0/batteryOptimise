@@ -1,4 +1,5 @@
 import os
+import pwd
 import glob
 import time
 from datetime import datetime, timedelta
@@ -37,6 +38,7 @@ def execute_command(command, timeout=2):
         result = subprocess.run(
             command, shell=True, timeout=timeout, text=True, capture_output=True
         )
+        print("output:", result.stdout, result.stderr)
         output = result.stdout.strip()
         if result.returncode != 0:
             print(f"Command exited with non-zero status: {result.returncode}")
@@ -157,18 +159,54 @@ def should_execute(config, current_execution_mode):
 
 
 def is_screen_on_and_unlocked():
-    # Check if the session is active (which implies the screen is on)
-    session_status = execute_command("loginctl show-session $(loginctl show-user $(whoami) -p Display --value) -p State --value")
-    if "active" not in session_status.lower():
+    """
+    Checks if the screen is on and unlocked for the regular user.
+    Returns True if the screen is on and unlocked, False otherwise.
+    """
+    # Determine the regular user (the user who invoked sudo or the current user)
+    regular_user = os.environ.get('SUDO_USER') or os.environ.get('USER')
+    if not regular_user:
+        print("Unable to determine the regular user.")
         return False
 
-    # Check if the screen is unlocked using GNOME D-Bus interface
-    lock_status = execute_command("gdbus call --session --dest org.gnome.ScreenSaver --object-path /org/gnome/ScreenSaver --method org.gnome.ScreenSaver.GetActive")
-    
+    try:
+        # Get the UID of the regular user using the pwd module
+        uid = pwd.getpwnam(regular_user).pw_uid
+    except KeyError:
+        print(f"User '{regular_user}' not found.")
+        return False
+
+    # Construct the DBus session address
+    dbus_address = f'unix:path=/run/user/{uid}/bus'
+
+    # Command to check if the user's session is active
+    session_command = (
+        f"loginctl show-session $(loginctl show-user {regular_user} -p Display --value) -p State --value"
+    )
+    session_status = execute_command(
+        f"su -m {regular_user} -c '{session_command}'"
+    )
+    if "active" not in session_status.lower():
+        print(f"Session is not active. Status: {session_status}")
+        return False
+
+    # Command to check if the screen is locked using GNOME's D-Bus interface
+    gdbus_command = (
+        f"DBUS_SESSION_BUS_ADDRESS={dbus_address} "
+        f"gdbus call --session --dest org.gnome.ScreenSaver "
+        f"--object-path /org/gnome/ScreenSaver "
+        f"--method org.gnome.ScreenSaver.GetActive"
+    )
+    lock_status = execute_command(
+        f"su -m {regular_user} -c '{gdbus_command}'"
+    )
+
     # The output will be "(false,)" if the screen is unlocked, and "(true,)" if it's locked
     if "true" in lock_status.lower():
+        print(f"Screen is locked. Lock status output: {lock_status}")
         return False
 
+    print("Screen is on and unlocked.")
     return True
 
 def main():
@@ -225,4 +263,5 @@ if __name__ == "__main__":
         print("This script must be run as root")
         exit(1)
 
-    main()
+    # main()
+    print(is_screen_on_and_unlocked())
