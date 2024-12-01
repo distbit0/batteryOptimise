@@ -142,7 +142,7 @@ def should_execute(config, current_execution_mode):
         print(
             f"Last executed {time_elapsed.total_seconds() / 3600:.2f} hours ago. "
             f"Current mode is the same, not enough time has elapsed, "
-            f"and no system reboot detected. Exiting."
+            f"and no system reboot detected."
         )
         return False, current_time, time_elapsed
 
@@ -158,14 +158,56 @@ def should_execute(config, current_execution_mode):
 
     return True, current_time, time_elapsed
 
+def get_real_user():
+    """
+    Attempts to find the real user even when running as root from crontab.
+    Returns tuple of (username, home_directory).
+    """
+    # First try getting all non-system users
+    real_users = []
+    
+    for pw in pwd.getpwall():
+        # Filter for real users (typically UID >= 1000 on modern Linux)
+        # and having a home directory in /home/
+        if (pw.pw_uid >= 1000 and 
+            pw.pw_dir.startswith('/home/') and 
+            os.path.exists(pw.pw_dir)):
+            real_users.append((pw.pw_name, pw.pw_dir))
+    
+    # If we find exactly one real user, return their info
+    if len(real_users) == 1:
+        return real_users[0]
+    
+    # If we found multiple users, try to find the most recently modified home directory
+    elif len(real_users) > 1:
+        latest_user = None
+        latest_time = 0
+        
+        for username, homedir in real_users:
+            try:
+                # Check the modification time of the user's .profile or similar
+                for check_file in ['.profile', '.bashrc', '.bash_history']:
+                    file_path = os.path.join(homedir, check_file)
+                    if os.path.exists(file_path):
+                        mtime = os.path.getmtime(file_path)
+                        if mtime > latest_time:
+                            latest_time = mtime
+                            latest_user = (username, homedir)
+            except (OSError, PermissionError):
+                continue
+                
+        if latest_user:
+            return latest_user
+    
+    return None, None
 
 def is_screen_on_and_unlocked():
     """
     Checks if the screen is on and unlocked for the regular user.
     Returns True if the screen is on and unlocked, False otherwise.
     """
-    # Determine the regular user (the user who invoked sudo or the current user)
-    regular_user = os.environ.get('SUDO_USER') or os.environ.get('USER')
+    # Determine the regular user by looking at name of their folder in home directory
+    regular_user = get_real_user()[0]
     if not regular_user:
         print("Unable to determine the regular user.")
         return False
@@ -181,11 +223,9 @@ def is_screen_on_and_unlocked():
     dbus_address = f'unix:path=/run/user/{uid}/bus'
 
     # Command to check if the user's session is active
-    session_command = (
-        f"loginctl show-session $(loginctl show-user {regular_user} -p Display --value) -p State --value"
-    )
+    print("regular_user", regular_user)
     session_status = execute_command(
-        f"su -m {regular_user} -c '{session_command}'"
+        f"su -m {regular_user} -c 'loginctl show-session $(loginctl show-user {regular_user} -p Display --value) -p State --value'"
     )
     if "active" not in session_status.lower():
         print(f"Session is not active. Status: {session_status}")

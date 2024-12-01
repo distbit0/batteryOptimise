@@ -1,6 +1,5 @@
 import glob
 
-
 def read_file(path):
     matching_files = glob.glob(path)
     if not matching_files:
