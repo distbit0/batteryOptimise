@@ -93,9 +93,10 @@ def install_auto_cpufreq():
         print("auto-cpufreq is already installed")
     else:
         print("Installing auto-cpufreq")
-        execute_command(
-            "git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer && cd .. && rm -rf auto-cpufreq"
+        print(
+            "INSTALL AUTOCPUFREQ WITH FOLLOWING COMMAND: sudo su; git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer && cd .. && rm -rf auto-cpufreq"
         )
+        exit(1)
     output = execute_command("auto-cpufreq --stats")
     return_code = 1 if "auto-cpufreq not running" in output else 0
     if return_code == 0:
@@ -263,5 +264,5 @@ if __name__ == "__main__":
         print("This script must be run as root")
         exit(1)
 
-    # main()
-    print(is_screen_on_and_unlocked())
+    main()
+    # print(is_screen_on_and_unlocked())

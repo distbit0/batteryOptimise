@@ -1,0 +1,27 @@
+[project]
+name = "batteryOptimise"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Dist Bit", email = "adp01@pm.me"},
+]
+dependencies = [
+    "python-dotenv",
+    "loguru",
+    "pysnooper",
+    "requests",
+    "psutil>=6.1.0",
+]
+requires-python = ">=3.12"
+license = {text = "UNLICENCE"}
+readme = "README.md"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.metadata]
+allow-direct-references = true
+
+[tool.hatch.build.targets.wheel]
+packages = ["src"]

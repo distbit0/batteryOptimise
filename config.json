@@ -1,6 +1,6 @@
 {
   "home_directory": "/home/pimania",
-  "last_execution_mode": "FalseTrueFalse",
+  "last_execution_mode": "TrueTrueFalse",
   "setAMDPstate": false,
   "alwaysCpuBatteryMode": true,
   "alwaysBrightnessBatteryMode": false,
@@ -75,6 +75,6 @@
   "batteryCheckCommands": {
     "cat /sys/class/power_supply/AC*/online": "0"
   },
-  "last_execution_time": "2024-10-12T00:48:46.621486",
+  "last_execution_time": "2024-12-01T12:16:00.456291",
   "min_execution_interval": 4
 }
