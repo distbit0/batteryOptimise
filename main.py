@@ -94,7 +94,7 @@ def install_auto_cpufreq():
     else:
         print("Installing auto-cpufreq")
         print(
-            "INSTALL AUTOCPUFREQ WITH FOLLOWING COMMAND: sudo su; git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer && cd .. && rm -rf auto-cpufreq"
+            "INSTALL AUTOCPUFREQ WITH FOLLOWING COMMAND:\nsudo su; git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer && cd .. && rm -rf auto-cpufreq"
         )
         exit(1)
     output = execute_command("auto-cpufreq --stats")
