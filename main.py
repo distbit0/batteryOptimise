@@ -56,9 +56,12 @@ def is_on_battery():
     commands = read_config("config.json")["batteryCheckCommands"]
     for command in commands:
         if commands[command].lower() in execute_command(command).lower():
-            current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
-            voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
-            power_consumption = current_now * voltage_now / 10**12
+            try:
+                current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
+                voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
+                power_consumption = current_now * voltage_now / 10**12
+            except:
+                power_consumption = float(read_file("/sys/class/power_supply/BAT*/power_now")) / 10**6
             # to avoid false positives where battery is neither charging nor discharging
             if power_consumption > 2:
                 return True
