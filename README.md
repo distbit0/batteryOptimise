@@ -1,6 +1,8 @@
 non-python dependencies:
 
-sudo dnf install uv tlp tlp-rdw powertop
+sudo dnf install tlp tlp-rdw powertop
+
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 git clone https://github.com/AdnanHodzic/auto-cpufreq.git
 cd auto-cpufreq && sudo ./auto-cpufreq-installer
