@@ -88,27 +88,6 @@ def execute_commands(commands):
         command, timeout = command
         execute_command(command, timeout)
 
-
-# def install_auto_cpufreq():
-#     output = execute_command("auto-cpufreq --version")
-#     return_code = 1 if output == "" else 0
-#     if return_code == 0:
-#         print("auto-cpufreq is already installed")
-#     else:
-#         print("Installing auto-cpufreq")
-#         print(
-#             "INSTALL AUTOCPUFREQ WITH FOLLOWING COMMAND:\nsudo su; git clone https://github.com/AdnanHodzic/auto-cpufreq.git; cd auto-cpufreq; ./auto-cpufreq-installer && cd .. && rm -rf auto-cpufreq"
-#         )
-#         exit(1)
-#     output = execute_command("auto-cpufreq --stats")
-#     return_code = 1 if "auto-cpufreq not running" in output else 0
-#     if return_code == 0:
-#         print("auto-cpufreq is already installed")
-#     else:
-#         print("Installing auto-cpufreq")
-#         execute_command("sudo auto-cpufreq --install")
-
-
 def replace_placeholders(command, config):
     return command.replace("$$$", getAbsPath("")).replace("~", config["home_directory"])
 
@@ -282,8 +261,7 @@ def main():
         execute_commands(
             [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in cpuCommands]
         )
-        # if isOnBattery or alwaysCpuBatteryMode:
-            # install_auto_cpufreq()
+        
         # Update the last execution mode and time in the config
         config["last_execution_mode"] = currentExecutionMode
         config["last_execution_time"] = current_time.isoformat()
