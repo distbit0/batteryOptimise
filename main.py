@@ -10,8 +10,6 @@ import subprocess
 from os import path
 import sys
 import psutil
-import traceback
-import pysnooper
 
 
 def read_file(path):
