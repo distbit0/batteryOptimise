@@ -96,4 +96,4 @@ time_remaining_rounded = round(time_remaining, 1)
 if time_remaining_rounded > 20:
     time_remaining_rounded = float("inf")
 
-print(f"{power_consumption_rounded}W 10m:{avg_power_consumption_rounded}W {time_remaining_rounded}H")
+print(f"| {power_consumption_rounded}W || 10m: {avg_power_consumption_rounded}W {time_remaining_rounded}H |")
