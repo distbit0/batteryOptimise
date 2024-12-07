@@ -93,4 +93,4 @@ save_power_history(history, log_file)
 avg_power_consumption = calculate_average_power(history)
 avg_power_consumption_rounded = round(avg_power_consumption, 1)
 
-print(f"Current: {power_consumption_rounded} W | Avg(10min): {avg_power_consumption_rounded} W | Time: {time_remaining_rounded} H")
+print(f"{power_consumption_rounded}W 10m:{avg_power_consumption_rounded}W {time_remaining_rounded}H")
