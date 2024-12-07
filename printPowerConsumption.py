@@ -68,19 +68,8 @@ total_capacity = (
     / 100
 )
 
-if power_consumption != 0:
-    if power_consumption > 0:
-        time_remaining = (total_capacity - current_charge) / current_now
-    else:
-        time_remaining = current_charge / current_now
-else:
-    time_remaining = float("inf")  # Represents an infinite amount of time
-
-# Round both values to one decimal place
+# Round power consumption
 power_consumption_rounded = round(power_consumption, 1)
-time_remaining_rounded = round(time_remaining, 1)
-if time_remaining_rounded > 20:
-    time_remaining_rounded = float("inf")
 
 # Load and update power consumption history
 log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "power_history.log")
@@ -92,5 +81,19 @@ save_power_history(history, log_file)
 # Calculate 10-minute average
 avg_power_consumption = calculate_average_power(history)
 avg_power_consumption_rounded = round(avg_power_consumption, 1)
+
+# Calculate time remaining based on average power consumption
+if avg_power_consumption != 0:
+    avg_current = (avg_power_consumption * 10**12) / voltage_now  # Convert back to microamps
+    if avg_power_consumption > 0:
+        time_remaining = (total_capacity - current_charge) / abs(avg_current)
+    else:
+        time_remaining = current_charge / abs(avg_current)
+else:
+    time_remaining = float("inf")  # Represents an infinite amount of time
+
+time_remaining_rounded = round(time_remaining, 1)
+if time_remaining_rounded > 20:
+    time_remaining_rounded = float("inf")
 
 print(f"{power_consumption_rounded}W 10m:{avg_power_consumption_rounded}W {time_remaining_rounded}H")
