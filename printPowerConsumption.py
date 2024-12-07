@@ -50,15 +50,16 @@ def read_file(path):
         return file.read().strip()
 
 
-# Read AC status, current (in microamperes), and voltage (in microvolts)
-ac_status = read_file("/sys/class/power_supply/AC*/online")
-current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
-voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
-
-# Calculate power consumption in watts
-power_consumption = current_now * voltage_now / 10**12
+# current (in microamperes), and voltage (in microvolts)
+try:
+    current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
+    voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
+    power_consumption = current_now * voltage_now / 10**12
+except:
+    power_consumption = float(read_file("/sys/class/power_supply/BAT*/power_now")) / 10**6
 
 # Adjust sign based on AC status
+ac_status = read_file("/sys/class/power_supply/AC*/online")
 if ac_status == "0":
     power_consumption = -power_consumption
 elif ac_status == "1":
