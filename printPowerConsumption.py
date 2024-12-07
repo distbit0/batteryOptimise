@@ -3,7 +3,7 @@ import time
 import os
 from datetime import datetime, timedelta
 
-def load_power_history(log_file):
+def load_power_history(log_file, current_power):
     """Load and clean power consumption history from log file"""
     if not os.path.exists(log_file):
         return []
@@ -16,8 +16,12 @@ def load_power_history(log_file):
             try:
                 timestamp_str, power_str = line.strip().split(',')
                 timestamp = datetime.fromtimestamp(float(timestamp_str))
-                if current_time - timestamp <= timedelta(minutes=10):
-                    history.append((timestamp, float(power_str)))
+                power = float(power_str)
+                # Only include entries that have the same sign as current power
+                if (current_time - timestamp <= timedelta(minutes=10) and 
+                    ((current_power >= 0 and power >= 0) or 
+                     (current_power < 0 and power < 0))):
+                    history.append((timestamp, power))
             except (ValueError, IndexError):
                 continue
     
@@ -73,7 +77,7 @@ power_consumption_rounded = round(power_consumption, 1)
 
 # Load and update power consumption history
 log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "power_history.log")
-history = load_power_history(log_file)
+history = load_power_history(log_file, power_consumption)
 history.append((datetime.now(), power_consumption))
 history = [x for x in history if datetime.now() - x[0] <= timedelta(minutes=10)]
 save_power_history(history, log_file)
