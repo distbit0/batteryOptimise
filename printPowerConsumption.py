@@ -101,5 +101,5 @@ time_remaining_rounded = round(time_remaining, 1)
 if time_remaining_rounded > 20:
     time_remaining_rounded = float("inf")
 
-print(f"|NOW: {power_consumption_rounded}W || AVG: {avg_power_consumption_rounded}W {time_remaining_rounded}H|")
-# print(f"AVG: {avg_power_consumption_rounded}W {time_remaining_rounded}H")
+battery_percent = int((current_charge / total_capacity) * 100)
+print(f"|{battery_percent}% {power_consumption_rounded}W {avg_power_consumption_rounded}W {time_remaining_rounded}H|")
