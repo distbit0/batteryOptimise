@@ -34,7 +34,10 @@ def execute_command(command, timeout=2):
     try:
         print("\nExecuting command:", command)
         result = subprocess.run(
-            command, shell=True, timeout=timeout, text=True, capture_output=True
+            ['bash', '-c', command],  # Use bash explicitly
+            timeout=timeout,
+            text=True,
+            capture_output=True
         )
         print("output:", result.stdout, result.stderr)
         output = result.stdout.strip()
@@ -48,7 +51,6 @@ def execute_command(command, timeout=2):
         print(f"Command execution error: {type(e).__name__}", file=sys.stderr)
         output = ""
     return output if type(output) == str else ""
-
 
 def is_on_battery():
     commands = read_config("config.json")["batteryCheckCommands"]
@@ -181,6 +183,49 @@ def get_real_user():
     
     return None, None
 
+def check_screen_lock_status(regular_user, dbus_address):
+    # First try GNOME screensaver
+    gdbus_command = (
+        f"DBUS_SESSION_BUS_ADDRESS={dbus_address} "
+        f"gdbus call --session --dest org.gnome.ScreenSaver "
+        f"--object-path /org/gnome/ScreenSaver "
+        f"--method org.gnome.ScreenSaver.GetActive"
+    )
+    
+    lock_status = execute_command(
+        f"su -m {regular_user} -c '{gdbus_command}'"
+    )
+    
+    if lock_status and "true" in lock_status.lower():
+        print(f"Screen is locked (GNOME). Lock status output: {lock_status}")
+        return False
+
+    # Try XScreenSaver
+    xscreensaver_command = f"su -m {regular_user} -c 'xscreensaver-command -time 2>/dev/null'"
+    xss_status = execute_command(xscreensaver_command)
+    
+    if xss_status and "screen locked" in xss_status.lower():
+        print(f"Screen is locked (XScreenSaver). Lock status output: {xss_status}")
+        return False
+
+    # Try X11 screensaver
+    x11_command = f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"DPMS is Enabled\"'"
+    x11_status = execute_command(x11_command, )
+    
+    if x11_status:
+        # Check if screen is in power saving mode
+        dpms_command = f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
+        dpms_status = execute_command(dpms_command, )
+        
+        if dpms_status and any(state in dpms_status.lower() for state in ["standby", "suspended", "off"]):
+            print(f"Screen is in power saving mode (X11). Status: {dpms_status}")
+            return False
+
+    # If we get here, assume screen is not locked
+    return True
+
+
+
 def is_screen_on_and_unlocked():
     """
     Checks if the screen is on and unlocked for the regular user.
@@ -211,20 +256,9 @@ def is_screen_on_and_unlocked():
         print(f"Session is not active. Status: {session_status}")
         return False
 
-    # Command to check if the screen is locked using GNOME's D-Bus interface
-    gdbus_command = (
-        f"DBUS_SESSION_BUS_ADDRESS={dbus_address} "
-        f"gdbus call --session --dest org.gnome.ScreenSaver "
-        f"--object-path /org/gnome/ScreenSaver "
-        f"--method org.gnome.ScreenSaver.GetActive"
-    )
-    lock_status = execute_command(
-        f"su -m {regular_user} -c '{gdbus_command}'"
-    )
-
-    # The output will be "(false,)" if the screen is unlocked, and "(true,)" if it's locked
-    if "true" in lock_status.lower():
-        print(f"Screen is locked. Lock status output: {lock_status}")
+    unlocked = check_screen_lock_status(regular_user, dbus_address)
+    if not unlocked:
+        print("Screen is locked. Not executing command.")
         return False
 
     print("Screen is on and unlocked.")

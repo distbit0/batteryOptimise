@@ -101,8 +101,8 @@ if avg_power_consumption != 0:
 else:
     time_remaining = float("inf")  # Represents an infinite amount of time
 
-time_remaining_rounded = round(time_remaining, 1)
-if time_remaining_rounded > 20:
+time_remaining_rounded = abs(round(time_remaining, 1))
+if time_remaining_rounded > 40:
     time_remaining_rounded = float("inf")
 
 battery_percent = int((current_charge / charge_full) * 100)

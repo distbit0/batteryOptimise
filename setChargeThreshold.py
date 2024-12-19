@@ -9,11 +9,13 @@ fullThreshold = 100
 
 def set_charge_threshold(threshold):
     command = f"sudo echo {threshold} > /sys/class/power_supply/{batteryName}/charge_control_end_threshold"
+    print(command)
     os.system('/bin/bash -c "' + command + '"')
 
 
 def get_charge_threshold():
     command = f"/bin/bash -c 'cat /sys/class/power_supply/{batteryName}/charge_control_end_threshold'"
+    print(command)
     output = subprocess.check_output(command, shell=True).decode().strip()
     return int(output)
 
