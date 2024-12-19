@@ -105,4 +105,5 @@ if time_remaining_rounded > 20:
     time_remaining_rounded = float("inf")
 
 battery_percent = int((current_charge / total_capacity) * 100)
+print(f"current charge: {current_charge}, total capacity: {total_capacity}, battery percent: {battery_percent}")
 print(f"| {battery_percent}% | NOW: {power_consumption_rounded}W || AVG: {avg_power_consumption_rounded}W | {time_remaining_rounded}H |")
