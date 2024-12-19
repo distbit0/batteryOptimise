@@ -70,9 +70,10 @@ elif ac_status == "1":
 
 # Read battery's current charge and total capacity (in microamperes-hours)
 current_charge = float(read_file("/sys/class/power_supply/BAT*/charge_now"))
+charge_full = float(read_file("/sys/class/power_supply/BAT*/charge_full"))
 total_capacity = (
     float(read_file("/sys/class/power_supply/BAT*/charge_control_end_threshold"))
-    * float(read_file("/sys/class/power_supply/BAT*/charge_full"))
+    * charge_full
     / 100
 )
 
@@ -104,6 +105,5 @@ time_remaining_rounded = round(time_remaining, 1)
 if time_remaining_rounded > 20:
     time_remaining_rounded = float("inf")
 
-battery_percent = int((current_charge / total_capacity) * 100)
-print(f"current charge: {current_charge}, total capacity: {total_capacity}, battery percent: {battery_percent}")
+battery_percent = int((current_charge / charge_full) * 100)
 print(f"| {battery_percent}% | NOW: {power_consumption_rounded}W || AVG: {avg_power_consumption_rounded}W | {time_remaining_rounded}H |")
