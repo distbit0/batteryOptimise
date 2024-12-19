@@ -52,11 +52,14 @@ def read_file(path):
 
 # current (in microamperes), and voltage (in microvolts)
 try:
-    current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
-    voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
-    power_consumption = current_now * voltage_now / 10**12
+    try:
+        current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
+        voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
+        power_consumption = current_now * voltage_now / 10**12
+    except:
+        power_consumption = float(read_file("/sys/class/power_supply/BAT*/power_now")) / 10**6
 except:
-    power_consumption = float(read_file("/sys/class/power_supply/BAT*/power_now")) / 10**6
+    power_consumption = 0.0
 
 # Adjust sign based on AC status
 ac_status = read_file("/sys/class/power_supply/AC*/online")
