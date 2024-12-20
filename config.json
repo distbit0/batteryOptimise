@@ -29,7 +29,7 @@
                     5
                 ],
                 [
-                    "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install; sudo sed -i 's/AutoEnable=true/AutoEnable=false/' /etc/bluetooth/main.conf || :",
+                    "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
                     1
                 ],
                 [
@@ -74,6 +74,6 @@
     "batteryCheckCommands": {
         "cat /sys/class/power_supply/AC*/online": "0"
     },
-    "last_execution_time": "2024-12-21T07:54:00.915533",
+    "last_execution_time": "2024-12-21T08:58:00.926033",
     "min_execution_interval": 4
 }
