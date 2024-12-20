@@ -89,7 +89,8 @@ def execute_commands(commands):
         execute_command(command, timeout)
 
 def replace_placeholders(command, config):
-    return command.replace("$$$", getAbsPath("")).replace("~", config["home_directory"])
+    home_directory = get_real_user()[1]
+    return command.replace("$$$", getAbsPath("")).replace("~", home_directory)
 
 
 def should_execute(config, current_execution_mode):
