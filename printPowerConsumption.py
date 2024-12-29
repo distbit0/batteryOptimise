@@ -3,8 +3,8 @@ import time
 import os
 from datetime import datetime, timedelta
 
-def load_power_history(log_file, current_power):
-    """Load and clean power consumption history from log file"""
+def load_charge_history(log_file):
+    """Load and clean battery charge history from log file"""
     if not os.path.exists(log_file):
         return []
     
@@ -14,30 +14,39 @@ def load_power_history(log_file, current_power):
     with open(log_file, 'r') as f:
         for line in f.readlines():
             try:
-                timestamp_str, power_str = line.strip().split(',')
+                timestamp_str, charge_str = line.strip().split(',')
                 timestamp = datetime.fromtimestamp(float(timestamp_str))
-                power = float(power_str)
-                # Only include entries that have the same sign as current power
-                if (current_time - timestamp <= timedelta(minutes=10) and 
-                    ((current_power >= 0 and power >= 0) or 
-                     (current_power < 0 and power < 0))):
-                    history.append((timestamp, power))
+                charge = float(charge_str)
+                if current_time - timestamp <= timedelta(minutes=10):
+                    history.append((timestamp, charge))
             except (ValueError, IndexError):
                 continue
     
     return history
 
-def save_power_history(history, log_file):
-    """Save power consumption history to log file"""
+def save_charge_history(history, log_file):
+    """Save battery charge history to log file"""
     with open(log_file, 'w') as f:
-        for timestamp, power in history:
-            f.write(f"{timestamp.timestamp()},{power}\n")
+        for timestamp, charge in history:
+            f.write(f"{timestamp.timestamp()},{charge}\n")
 
-def calculate_average_power(history):
-    """Calculate average power consumption from history"""
-    if not history:
+def calculate_average_power(history, current_charge, voltage_now):
+    """Calculate average power consumption from charge history"""
+    if len(history) < 2:
         return 0.0
-    return sum(power for _, power in history) / len(history)
+    
+    # Get the oldest and newest entries
+    oldest = history[0]
+    newest = (datetime.now(), current_charge)
+    
+    # Calculate time difference in hours
+    time_diff = (newest[0] - oldest[0]).total_seconds() / 3600
+    
+    # Calculate charge difference in Ah (microamperes-hours to amperes-hours)
+    charge_diff = (newest[1] - oldest[1]) / 10**6
+    
+    # Power = Voltage * Current = Voltage * (ΔCharge/ΔTime)
+    return voltage_now * (charge_diff / time_diff) / 10**6
 
 def read_file(path):
     matching_files = glob.glob(path)
@@ -80,15 +89,15 @@ total_capacity = (
 # Round power consumption
 power_consumption_rounded = round(power_consumption, 1)
 
-# Load and update power consumption history
-log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "power_history.log")
-history = load_power_history(log_file, power_consumption)
-history.append((datetime.now(), power_consumption))
+# Load and update charge history
+log_file = os.path.join(os.path.dirname(os.path.realpath(__file__)), "charge_history.log")
+history = load_charge_history(log_file)
+history.append((datetime.now(), current_charge))
 history = [x for x in history if datetime.now() - x[0] <= timedelta(minutes=10)]
-save_power_history(history, log_file)
+save_charge_history(history, log_file)
 
-# Calculate 10-minute average
-avg_power_consumption = calculate_average_power(history)
+# Calculate 10-minute average power consumption
+avg_power_consumption = calculate_average_power(history, current_charge, voltage_now)
 avg_power_consumption_rounded = round(avg_power_consumption, 1)
 
 # Calculate time remaining based on average power consumption
