@@ -93,3 +93,5 @@ profile_default/
 # output and storage
 output/
 data/
+
+logs/
