@@ -3,13 +3,14 @@ import pwd
 import glob
 import time
 from datetime import datetime, timedelta
-
 import json
 import time
 import subprocess
 from os import path
 import sys
 import psutil
+import logging
+from logging.handlers import TimedRotatingFileHandler
 
 
 def read_file(path):
@@ -42,13 +43,13 @@ def execute_command(command, timeout=2):
         print("output:", result.stdout, result.stderr)
         output = result.stdout.strip()
         if result.returncode != 0:
-            print(f"Command exited with non-zero status: {result.returncode}")
-            print(f"Error output: {result.stderr.strip()}")
+            logging.error(f"Command exited with non-zero status: {result.returncode}")
+            logging.error(f"Error output: {result.stderr.strip()}")
     except subprocess.TimeoutExpired as e:
-        print(f"Command timed out after {timeout} seconds")
+        logging.warning(f"Command timed out after {timeout} seconds")
         output = e.stdout if e.stdout else ""
     except Exception as e:
-        print(f"Command execution error: {type(e).__name__}", file=sys.stderr)
+        logging.error(f"Command execution error: {type(e).__name__}")
         output = ""
     return output if type(output) == str else ""
 
@@ -122,7 +123,7 @@ def should_execute(config, current_execution_mode):
     should_run = mode_changed or time_elapsed_sufficient or system_rebooted
 
     if not should_run:
-        print(
+        logging.info(
             f"Last executed {time_elapsed.total_seconds() / 3600:.2f} hours ago. "
             f"Current mode is the same, not enough time has elapsed, "
             f"and no system reboot detected."
@@ -131,11 +132,11 @@ def should_execute(config, current_execution_mode):
 
     # If we're running due to a reboot, update the message
     if system_rebooted:
-        print("System reboot detected. Executing...")
+        logging.info("System reboot detected. Executing...")
     elif mode_changed:
-        print("Execution mode has changed. Executing...")
+        logging.info("Execution mode has changed. Executing...")
     else:
-        print(
+        logging.info(
             f"Sufficient time ({time_elapsed.total_seconds() / 3600:.2f} hours) has elapsed. Executing..."
         )
 
@@ -198,7 +199,7 @@ def check_screen_lock_status(regular_user, dbus_address):
     )
     
     if lock_status and "true" in lock_status.lower():
-        print(f"Screen is locked (GNOME). Lock status output: {lock_status}")
+        logging.info(f"Screen is locked (GNOME). Lock status output: {lock_status}")
         return False
 
     # Try XScreenSaver
@@ -206,7 +207,7 @@ def check_screen_lock_status(regular_user, dbus_address):
     xss_status = execute_command(xscreensaver_command)
     
     if xss_status and "screen locked" in xss_status.lower():
-        print(f"Screen is locked (XScreenSaver). Lock status output: {xss_status}")
+        logging.info(f"Screen is locked (XScreenSaver). Lock status output: {xss_status}")
         return False
 
     # Try X11 screensaver
@@ -219,7 +220,7 @@ def check_screen_lock_status(regular_user, dbus_address):
         dpms_status = execute_command(dpms_command, )
         
         if dpms_status and any(state in dpms_status.lower() for state in ["standby", "suspended", "off"]):
-            print(f"Screen is in power saving mode (X11). Status: {dpms_status}")
+            logging.info(f"Screen is in power saving mode (X11). Status: {dpms_status}")
             return False
 
     # If we get here, assume screen is not locked
@@ -235,37 +236,67 @@ def is_screen_on_and_unlocked():
     # Determine the regular user by looking at name of their folder in home directory
     regular_user = get_real_user()[0]
     if not regular_user:
-        print("Unable to determine the regular user.")
+        logging.error("Unable to determine the regular user.")
         return False
 
     try:
         # Get the UID of the regular user using the pwd module
         uid = pwd.getpwnam(regular_user).pw_uid
     except KeyError:
-        print(f"User '{regular_user}' not found.")
+        logging.error(f"User '{regular_user}' not found.")
         return False
 
     # Construct the DBus session address
     dbus_address = f'unix:path=/run/user/{uid}/bus'
 
     # Command to check if the user's session is active
-    print("regular_user", regular_user)
+    logging.debug(f"Regular user: {regular_user}")
     session_status = execute_command(
         f"su -m {regular_user} -c 'loginctl show-session $(loginctl show-user {regular_user} -p Display --value) -p State --value'"
     )
     if "active" not in session_status.lower():
-        print(f"Session is not active. Status: {session_status}")
+        logging.info(f"Session is not active. Status: {session_status}")
         return False
 
     unlocked = check_screen_lock_status(regular_user, dbus_address)
     if not unlocked:
-        print("Screen is locked. Not executing command.")
+        logging.info("Screen is locked. Not executing command.")
         return False
 
-    print("Screen is on and unlocked.")
+    logging.info("Screen is on and unlocked.")
     return True
 
+def configure_logging():
+    # Create logs directory if it doesn't exist
+    log_dir = getAbsPath("logs")
+    if not os.path.exists(log_dir):
+        os.makedirs(log_dir)
+
+    # Set up logging configuration
+    logger = logging.getLogger()
+    logger.setLevel(logging.INFO)
+
+    # Create formatter
+    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+
+    # Add console handler
+    console_handler = logging.StreamHandler()
+    console_handler.setFormatter(formatter)
+    logger.addHandler(console_handler)
+
+    # Add timed rotating file handler (rotates daily, keeps 1 day)
+    file_handler = TimedRotatingFileHandler(
+        filename=os.path.join(log_dir, 'power_mode.log'),
+        when='midnight',
+        interval=1,
+        backupCount=1
+    )
+    file_handler.setFormatter(formatter)
+    logger.addHandler(file_handler)
+
 def main():
+    configure_logging()
+    logging.info("Starting power mode script")
     config = read_config("config.json")
     isOnBattery = is_on_battery()
     alwaysCpuBatteryMode = config["alwaysCpuBatteryMode"]
@@ -299,11 +330,11 @@ def main():
         config["last_execution_mode"] = currentExecutionMode
         config["last_execution_time"] = current_time.isoformat()
         write_config("config.json", config)
-        print(
+        logging.info(
             f"Executed ALL commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
     else:
-        print(
+        logging.info(
             f"Executed BRIGHTNESS commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
     # execute brightness commands anyway, because executing them is very non-compute-intensive, unlike cpu commands
@@ -315,7 +346,7 @@ def main():
 
 if __name__ == "__main__":
     if not os.geteuid() == 0:
-        print("This script must be run as root")
+        logging.error("This script must be run as root")
         exit(1)
 
     main()
