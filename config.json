@@ -1,5 +1,5 @@
 {
-    "last_execution_mode": "TrueFalseFalse",
+    "last_execution_mode": "FalseFalseFalse",
     "alwaysCpuBatteryMode": false,
     "alwaysBrightnessBatteryMode": false,
     "setAMDPstate": false,
@@ -55,7 +55,7 @@
         "commands": {
             "brightness": [
                 [
-                    "echo $(/sys/class/leds/*kbd_backlight/max_brightness) > /sys/class/leds/*kbd_backlight/brightness",
+                    "echo $(cat /sys/class/leds/*kbd_backlight/max_brightness) > /sys/class/leds/*kbd_backlight/brightness",
                     2
                 ],
                 [
@@ -86,6 +86,6 @@
     "batteryCheckCommands": {
         "cat /sys/class/power_supply/AC*/online": "0"
     },
-    "last_execution_time": "2025-01-02T20:09:41.498749",
+    "last_execution_time": "2025-01-03T00:46:26.544367",
     "min_execution_interval": 4
 }
