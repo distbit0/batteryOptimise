@@ -1,87 +1,91 @@
 {
-  "last_execution_mode": "TrueFalseFalse",
-  "alwaysCpuBatteryMode": false,
-  "alwaysBrightnessBatteryMode": false,
-  "setAMDPstate": false,
-  "battery_mode": {
-    "commands": {
-      "brightness": [
-        [
-          "[ $(cat /sys/class/leds/*kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/*kbd_backlight/brightness || :",
-          1
-        ],
-        [
-          "[ $(cat /sys/class/backlight/*/actual_brightness) -gt $(($(cat /sys/class/backlight/*/max_brightness) * 9 / 10)) ] && echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness || : # so that we do not clobber a custom brightness value",
-          2
-        ]
-      ],
-      "cpu": [
-        [
-          "cp $$$/tlp.conf /etc",
-          1
-        ],
-        [
-          "systemctl enable --now tlp.service",
-          10
-        ],
-        [
-          "sudo tlp bat",
-          5
-        ],
-        [
-          "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
-          1
-        ],
-        [
-          "sudo auto-cpufreq --force=powersave",
-          5
-        ],
-        [
-          "sudo powertop --auto-tune",
-          "15"
-        ],
-        [
-          "tuned-adm profile powersave",
-          2
-        ]
-      ]
-    }
-  },
-  "ac_mode": {
-    "commands": {
-      "brightness": [
-        [
-          "echo $(/sys/class/leds/*kbd_backlight/max_brightness) > /sys/class/leds/*kbd_backlight/brightness",
-          2
-        ],
-        [
-          "echo $(cat /sys/class/backlight/*/max_brightness) | tee /sys/class/backlight/*/brightness",
-          2
-        ]
-      ],
-      "cpu": [
-        [
-          "sudo tlp start",
-          5
-        ],
-        [
-          "sudo auto-cpufreq --force=reset",
-          5
-        ],
-        [
-          "sudo powertop --auto-tune",
-          "15"
-        ],
-        [
-          "tuned-adm profile balanced-battery",
-          2
-        ]
-      ]
-    }
-  },
-  "batteryCheckCommands": {
-    "cat /sys/class/power_supply/AC*/online": "0"
-  },
-  "last_execution_time": "2024-12-30T19:12:00.586848",
-  "min_execution_interval": 4
+    "last_execution_mode": "TrueFalseFalse",
+    "alwaysCpuBatteryMode": false,
+    "alwaysBrightnessBatteryMode": false,
+    "setAMDPstate": false,
+    "battery_mode": {
+        "commands": {
+            "brightness": [
+                [
+                    "[ $(cat /sys/class/leds/*kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/*kbd_backlight/brightness || :",
+                    1
+                ],
+                [
+                    "[ $(cat /sys/class/backlight/*/actual_brightness) -gt $(($(cat /sys/class/backlight/*/max_brightness) * 9 / 10)) ] && echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness || : # so that we do not clobber a custom brightness value",
+                    2
+                ]
+            ],
+            "cpu": [
+                [
+                    "echo 0 > /sys/class/leds/*kbd_backlight/brightness",
+                    1
+                ],
+                [
+                    "cp $$$/tlp.conf /etc",
+                    1
+                ],
+                [
+                    "systemctl enable --now tlp.service",
+                    10
+                ],
+                [
+                    "sudo tlp bat",
+                    5
+                ],
+                [
+                    "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
+                    1
+                ],
+                [
+                    "sudo auto-cpufreq --force=powersave",
+                    5
+                ],
+                [
+                    "sudo powertop --auto-tune",
+                    "15"
+                ],
+                [
+                    "tuned-adm profile powersave",
+                    2
+                ]
+            ]
+        }
+    },
+    "ac_mode": {
+        "commands": {
+            "brightness": [
+                [
+                    "echo $(/sys/class/leds/*kbd_backlight/max_brightness) > /sys/class/leds/*kbd_backlight/brightness",
+                    2
+                ],
+                [
+                    "echo $(cat /sys/class/backlight/*/max_brightness) | tee /sys/class/backlight/*/brightness",
+                    2
+                ]
+            ],
+            "cpu": [
+                [
+                    "sudo tlp start",
+                    5
+                ],
+                [
+                    "sudo auto-cpufreq --force=reset",
+                    5
+                ],
+                [
+                    "sudo powertop --auto-tune",
+                    "15"
+                ],
+                [
+                    "tuned-adm profile balanced-battery",
+                    2
+                ]
+            ]
+        }
+    },
+    "batteryCheckCommands": {
+        "cat /sys/class/power_supply/AC*/online": "0"
+    },
+    "last_execution_time": "2025-01-02T20:09:41.498749",
+    "min_execution_interval": 4
 }
