@@ -311,13 +311,13 @@ def main():
         else config["ac_mode"]["commands"]["oneTime"]
     )
 
-    currentExecutionMode = "onBattery" if isOnBattery else "notOnBattery"
+    currentExecutionMode = "onBattery" if isOnBattery else "onAC"
 
-    executeCPUCommands, current_time, time_elapsed = should_execute(
+    executeOneTimeCommands, current_time, time_elapsed = should_execute(
         config, currentExecutionMode
     )
 
-    if executeCPUCommands:
+    if executeOneTimeCommands:
         execute_commands(
             [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in oneTimeCommands]
         )
@@ -331,7 +331,7 @@ def main():
         )
     else:
         logging.info(
-            f"Executed BRIGHTNESS commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
+            f"Executed recurring commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
     # execute recurring commands anyway, because executing them is very non-compute-intensive, unlike oneTime commands
     if is_screen_on_and_unlocked(): 
