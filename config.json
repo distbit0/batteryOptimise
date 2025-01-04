@@ -1,11 +1,9 @@
 {
     "last_execution_mode": "FalseFalseFalse",
-    "alwaysCpuBatteryMode": false,
-    "alwaysBrightnessBatteryMode": false,
     "setAMDPstate": false,
     "battery_mode": {
         "commands": {
-            "brightness": [
+            "recurring": [
                 [
                     "[ $(cat /sys/class/leds/*kbd_backlight/brightness) -ge 2 ] && echo 0 > /sys/class/leds/*kbd_backlight/brightness || :",
                     1
@@ -15,9 +13,13 @@
                     2
                 ]
             ],
-            "cpu": [
+            "oneTime": [
                 [
                     "echo 0 > /sys/class/leds/*kbd_backlight/brightness",
+                    1
+                ],
+                [
+                    "echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness",
                     1
                 ],
                 [
@@ -53,7 +55,7 @@
     },
     "ac_mode": {
         "commands": {
-            "brightness": [
+            "recurring": [
                 [
                     "echo $(cat /sys/class/leds/*kbd_backlight/max_brightness) > /sys/class/leds/*kbd_backlight/brightness",
                     2
@@ -63,7 +65,7 @@
                     2
                 ]
             ],
-            "cpu": [
+            "oneTime": [
                 [
                     "sudo tlp start",
                     5
@@ -86,6 +88,6 @@
     "batteryCheckCommands": {
         "cat /sys/class/power_supply/AC*/online": "0"
     },
-    "last_execution_time": "2025-01-03T00:46:26.544367",
+    "last_execution_time": "2025-01-04T18:50:01.215181",
     "min_execution_interval": 4
 }

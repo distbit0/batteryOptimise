@@ -299,23 +299,19 @@ def main():
     logging.info("Starting power mode script")
     config = read_config("config.json")
     isOnBattery = is_on_battery()
-    alwaysCpuBatteryMode = config["alwaysCpuBatteryMode"]
-    alwaysBrightnessBatteryMode = config["alwaysBrightnessBatteryMode"]
 
-    brightnessCommands = (
-        config["battery_mode"]["commands"]["brightness"]
-        if alwaysBrightnessBatteryMode or isOnBattery
-        else config["ac_mode"]["commands"]["brightness"]
+    recurringCommands = (
+        config["battery_mode"]["commands"]["recurring"]
+        if isOnBattery
+        else config["ac_mode"]["commands"]["recurring"]
     )
-    cpuCommands = (
-        config["battery_mode"]["commands"]["cpu"]
-        if alwaysCpuBatteryMode or isOnBattery
-        else config["ac_mode"]["commands"]["cpu"]
+    oneTimeCommands = (
+        config["battery_mode"]["commands"]["oneTime"]
+        if isOnBattery
+        else config["ac_mode"]["commands"]["oneTime"]
     )
 
-    currentExecutionMode = (
-        str(isOnBattery) + str(alwaysCpuBatteryMode) + str(alwaysBrightnessBatteryMode)
-    )
+    currentExecutionMode = "onBattery" if isOnBattery else "notOnBattery"
 
     executeCPUCommands, current_time, time_elapsed = should_execute(
         config, currentExecutionMode
@@ -323,7 +319,7 @@ def main():
 
     if executeCPUCommands:
         execute_commands(
-            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in cpuCommands]
+            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in oneTimeCommands]
         )
         
         # Update the last execution mode and time in the config
@@ -337,10 +333,10 @@ def main():
         logging.info(
             f"Executed BRIGHTNESS commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
-    # execute brightness commands anyway, because executing them is very non-compute-intensive, unlike cpu commands
+    # execute recurring commands anyway, because executing them is very non-compute-intensive, unlike oneTime commands
     if is_screen_on_and_unlocked(): 
         execute_commands(
-            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in brightnessCommands]
+            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in recurringCommands]
         )
 
 
