@@ -60,10 +60,10 @@ def read_file(path):
 
 
 # current (in microamperes), and voltage (in microvolts)
+voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
 try:
     try:
         current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
-        voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
         power_consumption = current_now * voltage_now / 10**12
     except:
         power_consumption = float(read_file("/sys/class/power_supply/BAT*/power_now")) / 10**6
@@ -86,7 +86,6 @@ try:
     charge_full = float(read_file("/sys/class/power_supply/BAT*/charge_full"))
 except:
     charge_full = float(read_file("/sys/class/power_supply/BAT*/energy_full"))
-
 total_capacity = (
     float(read_file("/sys/class/power_supply/BAT*/charge_control_end_threshold"))
     * charge_full
