@@ -77,10 +77,25 @@ def read_config(config_file):
     with open(getAbsPath(config_file), "r") as file:
         return json.load(file)
 
+def read_execution_state():
+    state_file = getAbsPath("execution_state.json")
+    if not os.path.exists(state_file):
+        # Initialize with default values
+        default_state = {
+            "last_execution_mode": "onAC",
+            "last_execution_time": None
+        }
+        with open(state_file, "w") as f:
+            json.dump(default_state, f, indent=2)
+        return default_state
+    
+    with open(state_file, "r") as f:
+        return json.load(f)
 
-def write_config(config_file, config):
-    with open(getAbsPath(config_file), "w") as file:
-        json.dump(config, file, indent=2)
+def write_execution_state(state):
+    state_file = getAbsPath("execution_state.json")
+    with open(state_file, "w") as f:
+        json.dump(state, f, indent=2)
 
 
 def execute_commands(commands):
@@ -93,9 +108,9 @@ def replace_placeholders(command, config):
     return command.replace("$$$", getAbsPath("")).replace("~", home_directory)
 
 
-def should_execute(config, current_execution_mode):
-    last_execution_mode = config["last_execution_mode"]
-    last_execution_time = config.get("last_execution_time")
+def should_execute(execution_state, current_execution_mode):
+    last_execution_mode = execution_state["last_execution_mode"]
+    last_execution_time = execution_state.get("last_execution_time")
 
     # Define the minimum time interval between executions (e.g., 1 hour)
     min_interval = timedelta(hours=config["min_execution_interval"])
@@ -297,6 +312,7 @@ def main():
     configure_logging()
     logging.info("Starting power mode script")
     config = read_config("config.json")
+    execution_state = read_execution_state()
     isOnBattery = is_on_battery()
 
     recurringCommands = (
@@ -313,7 +329,7 @@ def main():
     currentExecutionMode = "onBattery" if isOnBattery else "onAC"
 
     executeOneTimeCommands, current_time, time_elapsed = should_execute(
-        config, currentExecutionMode
+        execution_state, currentExecutionMode
     )
 
     if executeOneTimeCommands:
@@ -321,10 +337,10 @@ def main():
             [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in oneTimeCommands]
         )
         
-        # Update the last execution mode and time in the config
-        config["last_execution_mode"] = currentExecutionMode
-        config["last_execution_time"] = current_time.isoformat()
-        write_config("config.json", config)
+        # Update the execution state
+        execution_state["last_execution_mode"] = currentExecutionMode
+        execution_state["last_execution_time"] = current_time.isoformat()
+        write_execution_state(execution_state)
         logging.info(
             f"Executed ALL commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
