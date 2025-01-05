@@ -108,7 +108,7 @@ def replace_placeholders(command, config):
     return command.replace("$$$", getAbsPath("")).replace("~", home_directory)
 
 
-def should_execute(execution_state, current_execution_mode):
+def should_execute(execution_state, current_execution_mode, config):
     last_execution_mode = execution_state["last_execution_mode"]
     last_execution_time = execution_state.get("last_execution_time")
 
@@ -329,7 +329,7 @@ def main():
     currentExecutionMode = "onBattery" if isOnBattery else "onAC"
 
     executeOneTimeCommands, current_time, time_elapsed = should_execute(
-        execution_state, currentExecutionMode
+        execution_state, currentExecutionMode, config
     )
 
     if executeOneTimeCommands:
