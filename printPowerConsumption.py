@@ -107,6 +107,7 @@ avg_power_consumption = calculate_average_power(history, current_charge, voltage
 avg_power_consumption_rounded = round(avg_power_consumption, 1)
 
 # Calculate time remaining based on average power consumption
+
 if avg_power_consumption != 0:
     avg_current = (avg_power_consumption * 10**12) / voltage_now  # Convert back to microamps
     if avg_power_consumption > 0:
