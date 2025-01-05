@@ -7,7 +7,6 @@ import json
 import time
 import subprocess
 from os import path
-import sys
 import psutil
 import logging
 from logging.handlers import TimedRotatingFileHandler
