@@ -1,5 +1,4 @@
 import glob
-import time
 import os
 from datetime import datetime, timedelta
 
@@ -86,8 +85,14 @@ try:
     charge_full = float(read_file("/sys/class/power_supply/BAT*/charge_full"))
 except:
     charge_full = float(read_file("/sys/class/power_supply/BAT*/energy_full"))
+    
+try:
+    charge_control_end_threshold = float(read_file("/sys/class/power_supply/BAT*/charge_control_end_threshold"))
+except:
+    charge_control_end_threshold = 100
+    
 total_capacity = (
-    float(read_file("/sys/class/power_supply/BAT*/charge_control_end_threshold"))
+     charge_control_end_threshold
     * charge_full
     / 100
 )
