@@ -78,8 +78,15 @@ elif ac_status == "1":
     power_consumption = +power_consumption
 
 # Read battery's current charge and total capacity (in microamperes-hours)
-current_charge = float(read_file("/sys/class/power_supply/BAT*/charge_now"))
-charge_full = float(read_file("/sys/class/power_supply/BAT*/charge_full"))
+try:
+    current_charge = float(read_file("/sys/class/power_supply/BAT*/charge_now"))
+except:
+    current_charge  = float(read_file("/sys/class/power_supply/BAT*/energy_now"))
+try:
+    charge_full = float(read_file("/sys/class/power_supply/BAT*/charge_full"))
+except:
+    charge_full = float(read_file("/sys/class/power_supply/BAT*/energy_full"))
+
 total_capacity = (
     float(read_file("/sys/class/power_supply/BAT*/charge_control_end_threshold"))
     * charge_full
