@@ -11,6 +11,7 @@ import psutil
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+
 def read_file(path):
     matching_files = glob.glob(path)
     if not matching_files:
@@ -33,10 +34,10 @@ def execute_command(command, timeout=2):
     try:
         print("\nExecuting command:", command)
         result = subprocess.run(
-            ['bash', '-c', command],  # Use bash explicitly
+            ["bash", "-c", command],  # Use bash explicitly
             timeout=timeout,
             text=True,
-            capture_output=True
+            capture_output=True,
         )
         print("output:", result.stdout, result.stderr)
         output = result.stdout.strip()
@@ -51,12 +52,14 @@ def execute_command(command, timeout=2):
         output = ""
     return output if type(output) == str else ""
 
+
 def get_battery_charge():
     """Read current battery charge in microampere-hours"""
     try:
         return float(read_file("/sys/class/power_supply/BAT*/charge_now"))
     except:
         return float(read_file("/sys/class/power_supply/BAT*/energy_now"))
+
 
 def is_on_battery():
     """Determine if we're on battery by checking if charge is decreasing"""
@@ -72,29 +75,39 @@ def is_on_battery():
                     history.append(charge)
                 except (ValueError, IndexError):
                     continue
-    
+
     # Get current charge
     current_charge = get_battery_charge()
-    
+
     # Update history (keep last 10 minutes)
     history.append(current_charge)
     history = history[-10:]  # Keep last 10 readings
-    
+
     # Save updated history
     with open(log_file, "w") as f:
         for charge in history:
             f.write(f"{time.time()},{charge}\n")
-    
+
     # If we have enough history, check if charge is decreasing
     if len(history) >= 2:
         # Calculate average change over last 2 readings
         charge_diff = history[-1] - history[-2]
+        logging.info(
+            "diff: "
+            + str(charge_diff)
+            + ", latest: "
+            + str(history[-1])
+            + ", second latest: "
+            + str(history[-2])
+        )
+
         # If charge is decreasing by more than 1% of typical full charge
-        if charge_diff < -100000:  # 100 mAh threshold
+        if charge_diff < 0:
             return True
-    
-    # Default to AC power if we can't determine
-    return False
+        elif charge_diff > 0:
+            return False
+        else:
+            return None
 
 
 def is_executed_recently(last_execution_time, execution_interval):
@@ -106,20 +119,19 @@ def read_config(config_file):
     with open(getAbsPath(config_file), "r") as file:
         return json.load(file)
 
+
 def read_execution_state():
     state_file = getAbsPath("execution_state.json")
     if not os.path.exists(state_file):
         # Initialize with default values
-        default_state = {
-            "last_execution_mode": "onAC",
-            "last_execution_time": None
-        }
+        default_state = {"last_execution_mode": "onAC", "last_execution_time": None}
         with open(state_file, "w") as f:
             json.dump(default_state, f, indent=2)
         return default_state
-    
+
     with open(state_file, "r") as f:
         return json.load(f)
+
 
 def write_execution_state(state):
     state_file = getAbsPath("execution_state.json")
@@ -131,6 +143,7 @@ def execute_commands(commands):
     for command in commands:
         command, timeout = command
         execute_command(command, timeout)
+
 
 def replace_placeholders(command, config):
     home_directory = get_real_user()[1]
@@ -185,6 +198,7 @@ def should_execute(execution_state, current_execution_mode, config):
 
     return True, current_time, time_elapsed
 
+
 def get_real_user():
     """
     Attempts to find the real user even when running as root from crontab.
@@ -192,28 +206,30 @@ def get_real_user():
     """
     # First try getting all non-system users
     real_users = []
-    
+
     for pw in pwd.getpwall():
         # Filter for real users (typically UID >= 1000 on modern Linux)
         # and having a home directory in /home/
-        if (pw.pw_uid >= 1000 and 
-            pw.pw_dir.startswith('/home/') and 
-            os.path.exists(pw.pw_dir)):
+        if (
+            pw.pw_uid >= 1000
+            and pw.pw_dir.startswith("/home/")
+            and os.path.exists(pw.pw_dir)
+        ):
             real_users.append((pw.pw_name, pw.pw_dir))
-    
+
     # If we find exactly one real user, return their info
     if len(real_users) == 1:
         return real_users[0]
-    
+
     # If we found multiple users, try to find the most recently modified home directory
     elif len(real_users) > 1:
         latest_user = None
         latest_time = 0
-        
+
         for username, homedir in real_users:
             try:
                 # Check the modification time of the user's .profile or similar
-                for check_file in ['.profile', '.bashrc', '.bash_history']:
+                for check_file in [".profile", ".bashrc", ".bash_history"]:
                     file_path = os.path.join(homedir, check_file)
                     if os.path.exists(file_path):
                         mtime = os.path.getmtime(file_path)
@@ -222,11 +238,12 @@ def get_real_user():
                             latest_user = (username, homedir)
             except (OSError, PermissionError):
                 continue
-                
+
         if latest_user:
             return latest_user
-    
+
     return None, None
+
 
 def check_screen_lock_status(regular_user, dbus_address):
     # First try GNOME screensaver
@@ -236,39 +253,50 @@ def check_screen_lock_status(regular_user, dbus_address):
         f"--object-path /org/gnome/ScreenSaver "
         f"--method org.gnome.ScreenSaver.GetActive"
     )
-    
-    lock_status = execute_command(
-        f"su -m {regular_user} -c '{gdbus_command}'"
-    )
-    
+
+    lock_status = execute_command(f"su -m {regular_user} -c '{gdbus_command}'")
+
     if lock_status and "true" in lock_status.lower():
         logging.info(f"Screen is locked (GNOME). Lock status output: {lock_status}")
         return False
 
     # Try XScreenSaver
-    xscreensaver_command = f"su -m {regular_user} -c 'xscreensaver-command -time 2>/dev/null'"
+    xscreensaver_command = (
+        f"su -m {regular_user} -c 'xscreensaver-command -time 2>/dev/null'"
+    )
     xss_status = execute_command(xscreensaver_command)
-    
+
     if xss_status and "screen locked" in xss_status.lower():
-        logging.info(f"Screen is locked (XScreenSaver). Lock status output: {xss_status}")
+        logging.info(
+            f"Screen is locked (XScreenSaver). Lock status output: {xss_status}"
+        )
         return False
 
     # Try X11 screensaver
-    x11_command = f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"DPMS is Enabled\"'"
-    x11_status = execute_command(x11_command, )
-    
+    x11_command = (
+        f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"DPMS is Enabled\"'"
+    )
+    x11_status = execute_command(
+        x11_command,
+    )
+
     if x11_status:
         # Check if screen is in power saving mode
-        dpms_command = f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
-        dpms_status = execute_command(dpms_command, )
-        
-        if dpms_status and any(state in dpms_status.lower() for state in ["standby", "suspended", "off"]):
+        dpms_command = (
+            f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
+        )
+        dpms_status = execute_command(
+            dpms_command,
+        )
+
+        if dpms_status and any(
+            state in dpms_status.lower() for state in ["standby", "suspended", "off"]
+        ):
             logging.info(f"Screen is in power saving mode (X11). Status: {dpms_status}")
             return False
 
     # If we get here, assume screen is not locked
     return True
-
 
 
 def is_screen_on_and_unlocked():
@@ -290,7 +318,7 @@ def is_screen_on_and_unlocked():
         return False
 
     # Construct the DBus session address
-    dbus_address = f'unix:path=/run/user/{uid}/bus'
+    dbus_address = f"unix:path=/run/user/{uid}/bus"
 
     # Command to check if the user's session is active
     logging.debug(f"Regular user: {regular_user}")
@@ -309,6 +337,7 @@ def is_screen_on_and_unlocked():
     logging.info("Screen is on and unlocked.")
     return True
 
+
 def configure_logging():
     # Create logs directory if it doesn't exist
     log_dir = getAbsPath("logs")
@@ -320,7 +349,7 @@ def configure_logging():
     logger.setLevel(logging.INFO)
 
     # Create formatter
-    formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
+    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
 
     # Add console handler
     console_handler = logging.StreamHandler()
@@ -329,13 +358,14 @@ def configure_logging():
 
     # Add timed rotating file handler (rotates daily, keeps 1 day)
     file_handler = TimedRotatingFileHandler(
-        filename=os.path.join(log_dir, 'power_mode.log'),
-        when='midnight',
+        filename=os.path.join(log_dir, "power_mode.log"),
+        when="midnight",
         interval=1,
-        backupCount=1
+        backupCount=1,
     )
     file_handler.setFormatter(formatter)
     logger.addHandler(file_handler)
+
 
 def main():
     configure_logging()
@@ -343,6 +373,8 @@ def main():
     config = read_config("config.json")
     execution_state = read_execution_state()
     isOnBattery = is_on_battery()
+    if isOnBattery is None:
+        isOnBattery = execution_state["last_execution_mode"] == "onBattery"
 
     recurringCommands = (
         config["battery_mode"]["commands"]["recurring"]
@@ -365,7 +397,7 @@ def main():
         execute_commands(
             [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in oneTimeCommands]
         )
-        
+
         # Update the execution state
         execution_state["last_execution_mode"] = currentExecutionMode
         execution_state["last_execution_time"] = current_time.isoformat()
@@ -378,9 +410,12 @@ def main():
             f"Executed recurring commands in {'battery' if isOnBattery else 'AC'} mode after {time_elapsed.total_seconds() / 3600:.2f} hours."
         )
     # execute recurring commands anyway, because executing them is very non-compute-intensive, unlike oneTime commands
-    if is_screen_on_and_unlocked(): 
+    if is_screen_on_and_unlocked():
         execute_commands(
-            [[replace_placeholders(cmd[0], config), cmd[1]] for cmd in recurringCommands]
+            [
+                [replace_placeholders(cmd[0], config), cmd[1]]
+                for cmd in recurringCommands
+            ]
         )
 
 
