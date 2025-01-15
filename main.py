@@ -51,19 +51,49 @@ def execute_command(command, timeout=2):
         output = ""
     return output if type(output) == str else ""
 
+def get_battery_charge():
+    """Read current battery charge in microampere-hours"""
+    try:
+        return float(read_file("/sys/class/power_supply/BAT*/charge_now"))
+    except:
+        return float(read_file("/sys/class/power_supply/BAT*/energy_now"))
+
 def is_on_battery():
-    commands = read_config("config.json")["batteryCheckCommands"]
-    for command in commands:
-        if commands[command].lower() in execute_command(command).lower():
-            try:
-                current_now = float(read_file("/sys/class/power_supply/BAT*/current_now"))
-                voltage_now = float(read_file("/sys/class/power_supply/BAT*/voltage_now"))
-                power_consumption = current_now * voltage_now / 10**12
-            except:
-                power_consumption = float(read_file("/sys/class/power_supply/BAT*/power_now")) / 10**6
-            # to avoid false positives where battery is neither charging nor discharging
-            if power_consumption > 2:
-                return True
+    """Determine if we're on battery by checking if charge is decreasing"""
+    # Load charge history
+    log_file = getAbsPath("charge_history.log")
+    history = []
+    if os.path.exists(log_file):
+        with open(log_file, "r") as f:
+            for line in f.readlines():
+                try:
+                    timestamp_str, charge_str = line.strip().split(",")
+                    charge = float(charge_str)
+                    history.append(charge)
+                except (ValueError, IndexError):
+                    continue
+    
+    # Get current charge
+    current_charge = get_battery_charge()
+    
+    # Update history (keep last 10 minutes)
+    history.append(current_charge)
+    history = history[-10:]  # Keep last 10 readings
+    
+    # Save updated history
+    with open(log_file, "w") as f:
+        for charge in history:
+            f.write(f"{time.time()},{charge}\n")
+    
+    # If we have enough history, check if charge is decreasing
+    if len(history) >= 2:
+        # Calculate average change over last 2 readings
+        charge_diff = history[-1] - history[-2]
+        # If charge is decreasing by more than 1% of typical full charge
+        if charge_diff < -100000:  # 100 mAh threshold
+            return True
+    
+    # Default to AC power if we can't determine
     return False
 
 
