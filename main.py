@@ -63,6 +63,24 @@ def get_battery_charge():
         return float(read_file("/sys/class/power_supply/BAT*/energy_now"))
 
 
+def read_battery_full():
+    # Same logic for full capacity
+    try:
+        return float(read_file("/sys/class/power_supply/BAT*/charge_full"))
+    except FileNotFoundError:
+        return float(read_file("/sys/class/power_supply/BAT*/energy_full"))
+
+
+def read_charge_end_threshold():
+    # Some systems have a file for charge_control_end_threshold
+    try:
+        return float(
+            read_file("/sys/class/power_supply/BAT*/charge_control_end_threshold")
+        )
+    except FileNotFoundError:
+        return 100.0
+
+
 def is_on_battery():
     """Determine if we're on battery by checking if charge is decreasing"""
     # Load charge history
@@ -95,6 +113,8 @@ def is_on_battery():
         for ts, ch in history:
             f.write(f"{ts},{ch}\n")
 
+    maxCharge = read_charge_end_threshold() * read_battery_full() / 100.0
+
     # If we have enough history, check if charge is decreasing
     if len(history) >= 2:
         # Get the two most recent readings
@@ -120,7 +140,9 @@ def is_on_battery():
             return True
         elif charge_rate > 0:
             return False
-        else:
+        elif charge_rate == 0:
+            if ch2 >= maxCharge:  # i.e. battery is full, so probably on ac
+                return False
             return None
 
 

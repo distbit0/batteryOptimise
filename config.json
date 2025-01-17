@@ -73,10 +73,6 @@
                     5
                 ],
                 [
-                    "sudo powertop --auto-tune",
-                    "15"
-                ],
-                [
                     "tuned-adm profile balanced-battery",
                     2
                 ]
