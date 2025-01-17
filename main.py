@@ -11,6 +11,8 @@ import psutil
 import logging
 from logging.handlers import TimedRotatingFileHandler
 
+HISTORY_DURATION_MINUTES = 10
+
 
 def read_file(path):
     matching_files = glob.glob(path)
@@ -79,9 +81,15 @@ def is_on_battery():
     # Get current charge
     current_charge = get_battery_charge()
 
-    # Update history (keep last 10 minutes)
+    # Update history (keep last 10 minutes of history)
     history.append(current_charge)
-    history = history[-10:]  # Keep last 10 readings
+
+    now_ts = datetime.now()
+    history = [
+        (ts, ch)
+        for ts, ch in history
+        if (now_ts - ts) <= timedelta(minutes=HISTORY_DURATION_MINUTES)
+    ]
 
     # Save updated history
     with open(log_file, "w") as f:
