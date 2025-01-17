@@ -73,46 +73,53 @@ def is_on_battery():
             for line in f.readlines():
                 try:
                     timestamp_str, charge_str = line.strip().split(",")
+                    timestamp = float(timestamp_str)
                     charge = float(charge_str)
-                    history.append(charge)
+                    history.append((timestamp, charge))
                 except (ValueError, IndexError):
                     continue
 
-    # Get current charge
+    # Get current charge and timestamp
     current_charge = get_battery_charge()
+    current_timestamp = time.time()
+    history.append((current_timestamp, current_charge))
 
-    # Update history (keep last 10 minutes of history)
-    history.append(current_charge)
-
-    now_ts = datetime.now()
+    # Filter history to keep only last 10 minutes of data
+    now_ts = time.time()
     history = [
-        (ts, ch)
-        for ts, ch in history
-        if (now_ts - ts) <= timedelta(minutes=HISTORY_DURATION_MINUTES)
+        (ts, ch) for ts, ch in history 
+        if (now_ts - ts) <= HISTORY_DURATION_MINUTES * 60
     ]
 
     # Save updated history
     with open(log_file, "w") as f:
-        for charge in history:
-            f.write(f"{time.time()},{charge}\n")
+        for ts, ch in history:
+            f.write(f"{ts},{ch}\n")
 
     # If we have enough history, check if charge is decreasing
     if len(history) >= 2:
-        # Calculate average change over last 2 readings
-        charge_diff = history[-1] - history[-2]
+        # Get the two most recent readings
+        (ts1, ch1), (ts2, ch2) = history[-2:]
+        
+        # Calculate time difference in hours
+        time_diff_hours = (ts2 - ts1) / 3600.0
+        
+        # Calculate charge difference
+        charge_diff = ch2 - ch1
+        
+        # Calculate charge rate (microampere-hours per hour)
+        charge_rate = charge_diff / time_diff_hours
+        
         logging.info(
-            "diff: "
-            + str(charge_diff)
-            + ", latest: "
-            + str(history[-1])
-            + ", second latest: "
-            + str(history[-2])
+            f"Charge rate: {charge_rate:.2f} μAh/h, "
+            f"Time diff: {time_diff_hours:.2f} hours, "
+            f"Charge diff: {charge_diff:.2f} μAh"
         )
 
-        # If charge is decreasing by more than 1% of typical full charge
-        if charge_diff < 0:
+        # If charge is decreasing
+        if charge_rate < 0:
             return True
-        elif charge_diff > 0:
+        elif charge_rate > 0:
             return False
         else:
             return None
