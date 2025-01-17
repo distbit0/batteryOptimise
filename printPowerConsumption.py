@@ -101,14 +101,26 @@ def delta_power_watts(charge_diff_microah, hours_diff, voltage):
 
 
 def calculate_now_power(history_entries, voltage):
-    # Compare only the last two readings
-    if len(history_entries) < 2:
+    # Use last three readings for smoother measurement
+    if len(history_entries) < 3:
         return 0.0
-    t_old, c_old = history_entries[-2]
-    t_new, c_new = history_entries[-1]
-    hours_diff = (t_new - t_old).total_seconds() / 3600
-    charge_diff = c_new - c_old
-    return delta_power_watts(charge_diff, hours_diff, voltage)
+    
+    # Get last three samples
+    t1, c1 = history_entries[-3]
+    t2, c2 = history_entries[-2]
+    t3, c3 = history_entries[-1]
+    
+    # Calculate power between each pair
+    hours_diff1 = (t2 - t1).total_seconds() / 3600
+    charge_diff1 = c2 - c1
+    power1 = delta_power_watts(charge_diff1, hours_diff1, voltage)
+    
+    hours_diff2 = (t3 - t2).total_seconds() / 3600
+    charge_diff2 = c3 - c2
+    power2 = delta_power_watts(charge_diff2, hours_diff2, voltage)
+    
+    # Return average of the two measurements
+    return (power1 + power2) / 2
 
 
 @pysnooper.snoop()
