@@ -101,6 +101,8 @@ class ChargeHistory:
     def __init__(self, history_file):
         self.history_file = history_file
         self.entries = self.load()
+        # Check for direction change immediately upon loading
+        self.check_direction_change()
 
     def load(self):
         entries = []
@@ -122,8 +124,26 @@ class ChargeHistory:
             for ts, ch in self.entries:
                 f.write(f"{ts},{ch}\n")
 
+    def check_direction_change(self):
+        """Clear history if charging direction has changed"""
+        if len(self.entries) < 2:
+            return
+
+        battery = BatteryStatus()
+        ac_state = battery.get_ac_status()
+        new_direction = 1 if ac_state == "1" else -1
+
+        old_direction = self.get_charge_direction()
+        if old_direction != 0 and old_direction != new_direction:
+            logging.info("Charging direction changed, clearing history")
+            self.entries.clear()
+
     def add_entry(self, charge):
         current_time = time.time()
+
+        # Check direction change before adding new entry
+        self.check_direction_change()
+
         self.entries.append((current_time, charge))
         self.entries = [
             (ts, ch)
