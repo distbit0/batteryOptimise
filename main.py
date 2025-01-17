@@ -87,8 +87,7 @@ def is_on_battery():
     # Filter history to keep only last 10 minutes of data
     now_ts = time.time()
     history = [
-        (ts, ch) for ts, ch in history 
-        if (now_ts - ts) <= HISTORY_DURATION_MINUTES * 60
+        (ts, ch) for ts, ch in history if (now_ts - ts) <= HISTORY_DURATION_MINUTES * 60
     ]
 
     # Save updated history
@@ -100,16 +99,16 @@ def is_on_battery():
     if len(history) >= 2:
         # Get the two most recent readings
         (ts1, ch1), (ts2, ch2) = history[-2:]
-        
+
         # Calculate time difference in hours
         time_diff_hours = (ts2 - ts1) / 3600.0
-        
+
         # Calculate charge difference
         charge_diff = ch2 - ch1
-        
+
         # Calculate charge rate (microampere-hours per hour)
         charge_rate = charge_diff / time_diff_hours
-        
+
         logging.info(
             f"Charge rate: {charge_rate:.2f} μAh/h, "
             f"Time diff: {time_diff_hours:.2f} hours, "
