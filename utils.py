@@ -157,11 +157,12 @@ class ChargeHistory:
         )
         if len(self.entries) < 2:
             return 0
-        if self.entries[-1][1] > self.entries[-3][1]:
+        oldEntry = self.entries[-min(3, len(self.entries))]
+        if self.entries[-1][1] > oldEntry[1]:
             return 1
-        elif self.entries[-1][1] < self.entries[-3][1]:
+        elif self.entries[-1][1] < oldEntry[1]:
             return -1
-        elif self.entries[-1][1] == self.entries[-3][1]:
+        elif self.entries[-1][1] == oldEntry[1]:
             if self.entries[-1][1] >= fullCharge:  # i.e. full charge hence on ac
                 return 1
             return 0
@@ -171,7 +172,7 @@ class ChargeHistory:
             return 0.0, 0.0
 
         # Calculate instantaneous power
-        t1, c1 = self.entries[-4]
+        t1, c1 = self.entries[-min(4, len(self.entries))]
         t2, c2 = self.entries[-1]
         hours_diff = (t2 - t1) / 3600
         charge_diff = c2 - c1
