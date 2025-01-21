@@ -155,7 +155,7 @@ def main():
 
     charge_direction = history.get_charge_direction()
     is_on_battery = (
-        charge_direction < 0
+        charge_direction == -1
         if charge_direction != 0
         else (execution_state["last_execution_mode"] == "onBattery")
     )
