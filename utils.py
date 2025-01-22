@@ -159,7 +159,10 @@ class ChargeHistory:
         battery = BatteryStatus()
         ac_state = battery.get_ac_status()
         if len(self.entries) < 2:
-            return 0
+            self.add_entry(BatteryStatus.get_charge())
+            return (
+                self.get_charge_direction()
+            )  # recurse until it can return a valid value
         oldEntry = self.entries[-min(3, len(self.entries))]
         if self.entries[-1][1] > oldEntry[1]:
             return 1
