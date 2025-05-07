@@ -155,7 +155,7 @@ class ChargeHistory:
         fullCharge = (
             BatteryStatus.get_end_threshold() * BatteryStatus.get_full_capacity() / 100
         )
-        isFullyCharged = self.entries[-1][1] == fullCharge
+        isFullyCharged = self.entries[-1][1] > fullCharge * 0.98
         battery = BatteryStatus()
         ac_state = battery.get_ac_status()
         if len(self.entries) < 2:
