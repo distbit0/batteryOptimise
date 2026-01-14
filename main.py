@@ -67,6 +67,19 @@ def should_execute(execution_state, current_execution_mode, config):
 
 
 def check_screen_lock_status(regular_user, dbus_address):
+    # Check XFCE4 screensaver (most likely on XFCE)
+    xfce_command = (
+        f"DBUS_SESSION_BUS_ADDRESS={dbus_address} "
+        f"gdbus call --session --dest org.xfce.ScreenSaver "
+        f"--object-path / "
+        f"--method org.xfce.ScreenSaver.GetActive"
+    )
+    xfce_status = execute_command(f"su -m {regular_user} -c '{xfce_command}'")
+    if xfce_status and "true" in xfce_status.lower():
+        logging.info(f"Screen is locked (XFCE). Lock status output: {xfce_status}")
+        return False
+
+    # Check GNOME screensaver
     gdbus_command = (
         f"DBUS_SESSION_BUS_ADDRESS={dbus_address} "
         f"gdbus call --session --dest org.gnome.ScreenSaver "
@@ -78,6 +91,7 @@ def check_screen_lock_status(regular_user, dbus_address):
         logging.info(f"Screen is locked (GNOME). Lock status output: {lock_status}")
         return False
 
+    # Check XScreenSaver
     xscreensaver_command = (
         f"su -m {regular_user} -c 'xscreensaver-command -time 2>/dev/null'"
     )
@@ -88,20 +102,16 @@ def check_screen_lock_status(regular_user, dbus_address):
         )
         return False
 
-    x11_command = (
-        f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"DPMS is Enabled\"'"
+    # Check X11 DPMS status
+    dpms_command = (
+        f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
     )
-    x11_status = execute_command(x11_command)
-    if x11_status:
-        dpms_command = (
-            f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
-        )
-        dpms_status = execute_command(dpms_command)
-        if dpms_status and any(
-            state in dpms_status.lower() for state in ["standby", "suspended", "off"]
-        ):
-            logging.info(f"Screen is in power saving mode (X11). Status: {dpms_status}")
-            return False
+    dpms_status = execute_command(dpms_command)
+    if dpms_status and any(
+        state in dpms_status.lower() for state in ["standby", "suspend", "off"]
+    ):
+        logging.info(f"Screen is in power saving mode (X11). Status: {dpms_status}")
+        return False
 
     return True
 
