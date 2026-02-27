@@ -21,10 +21,10 @@
         ["systemctl enable --now tlp.service", 10],
         ["sudo tlp bat", 5],
         [
-          "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
-          3
+          "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove; sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
+          15
         ],
-        ["sudo auto-cpufreq --force=powersave", 5],
+        ["sudo auto-cpufreq --force=powersave", 10],
         ["sudo powertop --auto-tune", "15"],
         ["tuned-adm profile powersave", 2]
       ]
@@ -46,7 +46,7 @@
         ["cp $$$/tlp.conf /etc", 1],
         ["systemctl enable --now tlp.service", 10],
         ["sudo tlp ac", 5],
-        ["sudo auto-cpufreq --force=reset", 5],
+        ["sudo auto-cpufreq --force=reset", 6],
         ["tuned-adm profile throughput-performance", 2]
       ]
     }

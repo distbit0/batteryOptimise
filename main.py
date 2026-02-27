@@ -103,9 +103,7 @@ def check_screen_lock_status(regular_user, dbus_address):
         return False
 
     # Check X11 DPMS status
-    dpms_command = (
-        f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
-    )
+    dpms_command = f"su -m {regular_user} -c 'xset q 2>/dev/null | grep \"Monitor is\"'"
     dpms_status = execute_command(dpms_command)
     if dpms_status and any(
         state in dpms_status.lower() for state in ["standby", "suspend", "off"]
