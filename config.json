@@ -7,7 +7,7 @@
           1
         ],
         [
-          "[ $(cat /sys/class/backlight/*/actual_brightness) -gt $(($(cat /sys/class/backlight/*/max_brightness) * 9.5 / 10)) ] && echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness || : # so that we do not clobber a custom brightness value",
+          "[ $(cat /sys/class/backlight/*/actual_brightness) -gt $(($(cat /sys/class/backlight/*/max_brightness) * 9 / 10)) ] && echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness || : # so that we do not clobber a custom brightness value",
           2
         ]
       ],
