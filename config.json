@@ -22,7 +22,7 @@
         ["sudo tlp bat", 5],
         [
           "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove && sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
-          1
+          3
         ],
         ["sudo auto-cpufreq --force=powersave", 5],
         ["sudo powertop --auto-tune", "15"],
