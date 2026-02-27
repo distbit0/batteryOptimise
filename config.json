@@ -43,9 +43,11 @@
         ]
       ],
       "oneTime": [
-        ["sudo tlp start", 5],
+        ["cp $$$/tlp.conf /etc", 1],
+        ["systemctl enable --now tlp.service", 10],
+        ["sudo tlp ac", 5],
         ["sudo auto-cpufreq --force=reset", 5],
-        ["tuned-adm profile balanced-battery", 2]
+        ["tuned-adm profile throughput-performance", 2]
       ]
     }
   },
