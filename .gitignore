@@ -96,3 +96,4 @@ data/
 logs/
 
 execution_state.json
+**/node_modules/
