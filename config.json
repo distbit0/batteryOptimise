@@ -17,15 +17,11 @@
           "echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness",
           1
         ],
-        ["cp $$$/tlp.conf /etc", 1],
-        ["systemctl enable --now tlp.service", 10],
-        ["sudo tlp bat", 5],
         [
           "[ $(cmp -s $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf || echo 1) ] && cp $$$/auto-cpufreq.conf /etc/auto-cpufreq.conf && sudo auto-cpufreq --remove; sudo auto-cpufreq --install; sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
           15
         ],
-        ["sudo auto-cpufreq --force=powersave", 10],
-        ["tuned-adm profile balanced", 2]
+        ["sudo auto-cpufreq --force=powersave", 10]
       ]
     }
   },
@@ -42,14 +38,52 @@
         ]
       ],
       "oneTime": [
-        ["cp $$$/tlp.conf /etc", 1],
-        ["systemctl enable --now tlp.service", 10],
-        ["sudo tlp ac", 5],
-        ["sudo auto-cpufreq --force=reset", 6],
-        ["tuned-adm profile throughput-performance", 2]
+        ["sudo auto-cpufreq --force=reset", 6]
       ]
     }
   },
+  "archived_commands": [
+    {
+      "mode": "battery",
+      "reason": "tlp is not installed and tlp.service is not found on this system.",
+      "command": ["cp $$$/tlp.conf /etc", 1]
+    },
+    {
+      "mode": "battery",
+      "reason": "tlp is not installed and tlp.service is not found on this system.",
+      "command": ["systemctl enable --now tlp.service", 10]
+    },
+    {
+      "mode": "battery",
+      "reason": "tlp is not installed and tlp.service is not found on this system.",
+      "command": ["sudo tlp bat", 5]
+    },
+    {
+      "mode": "battery",
+      "reason": "tuned.service is masked and inactive on this system.",
+      "command": ["tuned-adm profile balanced", 2]
+    },
+    {
+      "mode": "ac",
+      "reason": "tlp is not installed and tlp.service is not found on this system.",
+      "command": ["cp $$$/tlp.conf /etc", 1]
+    },
+    {
+      "mode": "ac",
+      "reason": "tlp is not installed and tlp.service is not found on this system.",
+      "command": ["systemctl enable --now tlp.service", 10]
+    },
+    {
+      "mode": "ac",
+      "reason": "tlp is not installed and tlp.service is not found on this system.",
+      "command": ["sudo tlp ac", 5]
+    },
+    {
+      "mode": "ac",
+      "reason": "tuned.service is masked and inactive on this system.",
+      "command": ["tuned-adm profile throughput-performance", 2]
+    }
+  ],
   "batteryCheckCommands": {
     "cat /sys/class/power_supply/AC*/online": "0"
   },

@@ -8,3 +8,8 @@
 
 - May 6 shutdown logs showed two `powertop --auto-tune` runs from the battery policy stuck in uninterruptible kernel sleep; both survived SIGTERM, SIGKILL, and left `/home` busy during final shutdown. Battery mode no longer invokes PowerTOP because it is unsafe on this Lunar Lake/Fedora stack.
 - The remaining battery policy still contains TLP/tuned commands, but the current system has no `tlp` binary and `tuned.service` is masked. Treat that as a separate power-policy cleanup; the shutdown fix is to stop scheduling PowerTOP.
+
+# Inactive Power Managers
+
+- `config.json` archives TLP commands instead of executing them because `tlp` is not installed and `tlp.service` is not found on the current system.
+- `config.json` archives tuned profile commands instead of executing them because `tuned.service` is masked and inactive. Re-enable tuned deliberately before moving those commands back into active mode policy.
