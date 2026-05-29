@@ -25,7 +25,7 @@
           15
         ],
         ["sudo auto-cpufreq --force=powersave", 10],
-        ["tuned-adm profile powersave", 2]
+        ["tuned-adm profile balanced", 2]
       ]
     }
   },
