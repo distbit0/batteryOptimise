@@ -13,3 +13,4 @@
 
 - `config.json` archives TLP commands instead of executing them because `tlp` is not installed and `tlp.service` is not found on the current system.
 - `config.json` archives tuned profile commands instead of executing them because `tuned.service` is masked and inactive. Re-enable tuned deliberately before moving those commands back into active mode policy.
+- `auto-cpufreq` remains the active power manager. Its battery profile keeps the `powersave` governor but uses `balance_power`, `balanced`, and `auto` turbo to reduce unplugged sluggishness without switching fully to performance policy.
