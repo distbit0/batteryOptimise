@@ -35,7 +35,7 @@ def main():
 
     print(
         f" {hours_remaining_rounded}h  {battery_pct}%  "
-        f"now: {round(now_power, 1)}w  avg: {round(avg_power, 1)}w "
+        f"{round(now_power, 1)}w  avg: {round(avg_power, 1)}w "
     )
 
 
