@@ -34,8 +34,8 @@ def main():
     battery_pct = battery.get_percentage()
 
     print(
-        f"  {hours_remaining_rounded}H   {battery_pct}%   "
-        f"now: {round(now_power, 1)}W    avg: {round(avg_power, 1)}W  "
+        f" {hours_remaining_rounded}h  {battery_pct}%  "
+        f"now: {round(now_power, 1)}w   avg: {round(avg_power, 1)}w "
     )
 
 
