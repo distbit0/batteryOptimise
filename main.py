@@ -1,11 +1,16 @@
+import argparse
+import json
+import logging
 import os
 import pwd
-import json
+import subprocess
 import tempfile
-import psutil
-import logging
-from pathlib import Path
+import time
 from datetime import datetime, timedelta
+from pathlib import Path
+
+import psutil
+
 from utils import (
     BatteryStatus,
     ChargeHistory,
@@ -18,6 +23,8 @@ from utils import (
 )
 
 BATTERY_EXECUTION_MODES = {"onBattery", "onBatteryLidClosed"}
+LID_POLL_SECONDS = 1
+DISPLAY_OFF_DELAY_SECONDS = 0.5
 
 
 def replace_placeholders(command):
@@ -30,11 +37,48 @@ def execute_commands(commands):
         execute_command(command, timeout)
 
 
+def load_config():
+    with open(getAbsPath("config.json"), "r") as config_file:
+        return json.load(config_file)
+
+
 def read_lid_closed(lid_state_file):
     lid_state = read_file(lid_state_file).split()
     if not lid_state or lid_state[-1].lower() not in {"open", "closed"}:
         raise ValueError(f"Unexpected lid state in {lid_state_file}")
     return lid_state[-1].lower() == "closed"
+
+
+def lock_screen_and_turn_off():
+    subprocess.run(
+        ["xfce4-screensaver-command", "--lock"],
+        check=True,
+        timeout=10,
+    )
+    time.sleep(DISPLAY_OFF_DELAY_SECONDS)
+    subprocess.run(
+        ["xset", "dpms", "force", "off"],
+        check=True,
+        timeout=10,
+    )
+
+
+def monitor_lid(lid_state_file):
+    configure_logging("lid_monitor")
+    logging.info(f"Monitoring lid state at {lid_state_file}")
+    lid_was_closed = False
+
+    try:
+        while True:
+            lid_is_closed = read_lid_closed(lid_state_file)
+            if lid_is_closed and not lid_was_closed:
+                logging.info("Lid closed; locking screen and turning off display")
+                lock_screen_and_turn_off()
+            lid_was_closed = lid_is_closed
+            time.sleep(LID_POLL_SECONDS)
+    except Exception:
+        logging.exception("Lid monitor stopped after a failure")
+        raise
 
 
 def read_ac_connected(ac_state_file):
@@ -240,8 +284,7 @@ def main():
     configure_logging("power_mode")
     logging.info("Starting power mode script")
 
-    with open(getAbsPath("config.json"), "r") as f:
-        config = json.load(f)
+    config = load_config()
 
     state_manager = StateManager(getAbsPath("execution_state.json"))
     execution_state = state_manager.read_state()
@@ -302,8 +345,18 @@ def main():
         )
 
 
+def parse_arguments(arguments=None):
+    parser = argparse.ArgumentParser()
+    parser.add_argument("command", nargs="?", choices=("monitor-lid",))
+    return parser.parse_args(arguments)
+
+
 if __name__ == "__main__":
-    if os.geteuid() != 0:
+    arguments = parse_arguments()
+    if arguments.command == "monitor-lid":
+        monitor_lid(load_config()["lid_state_file"])
+    elif os.geteuid() != 0:
         logging.error("This script must be run as root")
         exit(1)
-    main()
+    else:
+        main()

@@ -1,0 +1,13 @@
+[Unit]
+Description=Lock screen and turn off display when the lid closes
+PartOf=graphical-session.target
+After=graphical-session.target
+
+[Service]
+Type=simple
+ExecStart=%h/dev/misc/automation/uvrun.sh %h/dev/batteryOptimise/main.py monitor-lid
+Restart=on-failure
+RestartSec=5
+
+[Install]
+WantedBy=graphical-session.target

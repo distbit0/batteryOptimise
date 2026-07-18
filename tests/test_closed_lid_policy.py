@@ -7,6 +7,7 @@ from pathlib import Path
 
 from main import (
     BATTERY_EXECUTION_MODES,
+    parse_arguments,
     read_ac_connected,
     read_lid_closed,
     select_execution_mode,
@@ -100,6 +101,14 @@ class ClosedLidPolicyTests(unittest.TestCase):
             next(Path("/sys/class/power_supply").glob("AC*/online")).read_text().strip()
             == "1",
         )
+
+    def test_lid_monitor_service_uses_monitor_command(self):
+        service = configparser.ConfigParser(interpolation=None)
+        service.read(PROJECT_DIRECTORY / "battery-lid-lock.service")
+        exec_start = service["Service"]["ExecStart"].split()
+
+        self.assertEqual(parse_arguments(exec_start[-1:]).command, "monitor-lid")
+        self.assertEqual(service["Service"]["Restart"], "on-failure")
 
     def test_rejects_real_non_state_file_contents(self):
         config_file = str(PROJECT_DIRECTORY / "config.json")
