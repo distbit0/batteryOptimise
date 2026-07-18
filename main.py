@@ -1,8 +1,10 @@
 import os
 import pwd
 import json
+import tempfile
 import psutil
 import logging
+from pathlib import Path
 from datetime import datetime, timedelta
 from utils import (
     BatteryStatus,
@@ -11,8 +13,11 @@ from utils import (
     StateManager,
     configure_logging,
     getAbsPath,
+    read_file,
     execute_command,
 )
+
+BATTERY_EXECUTION_MODES = {"onBattery", "onBatteryLidClosed"}
 
 
 def replace_placeholders(command):
@@ -23,6 +28,92 @@ def replace_placeholders(command):
 def execute_commands(commands):
     for command, timeout in commands:
         execute_command(command, timeout)
+
+
+def read_lid_closed(lid_state_file):
+    lid_state = read_file(lid_state_file).split()
+    if not lid_state or lid_state[-1].lower() not in {"open", "closed"}:
+        raise ValueError(f"Unexpected lid state in {lid_state_file}")
+    return lid_state[-1].lower() == "closed"
+
+
+def read_ac_connected(ac_state_file):
+    ac_state = read_file(ac_state_file)
+    if ac_state not in {"0", "1"}:
+        raise ValueError(f"Unexpected AC state in {ac_state_file}: {ac_state!r}")
+    return ac_state == "1"
+
+
+def select_execution_mode(
+    lid_closed, ac_connected, is_on_battery, last_execution_mode
+):
+    if lid_closed and not ac_connected:
+        return "onBatteryLidClosed"
+    if ac_connected and last_execution_mode == "onBatteryLidClosed":
+        return "onAC"
+    return "onBattery" if is_on_battery else "onAC"
+
+
+def sync_auto_cpufreq_config(source_file, destination_file):
+    source_path = Path(source_file)
+    destination_path = Path(destination_file)
+    source_content = source_path.read_bytes()
+
+    if destination_path.exists() and destination_path.read_bytes() == source_content:
+        return False
+
+    temporary_path = None
+    try:
+        with tempfile.NamedTemporaryFile(
+            dir=destination_path.parent,
+            prefix=f".{destination_path.name}.",
+            delete=False,
+        ) as temporary_file:
+            temporary_file.write(source_content)
+            temporary_file.flush()
+            os.fsync(temporary_file.fileno())
+            temporary_path = Path(temporary_file.name)
+
+        temporary_path.chmod(0o644)
+        os.replace(temporary_path, destination_path)
+        return True
+    finally:
+        if temporary_path and temporary_path.exists():
+            temporary_path.unlink()
+
+
+def apply_auto_cpufreq_policy(config, current_execution_mode):
+    auto_cpufreq_config = config["auto_cpufreq"]
+    closed_lid_battery_mode = current_execution_mode == "onBatteryLidClosed"
+    profile_name = (
+        auto_cpufreq_config["closed_lid_battery_config"]
+        if closed_lid_battery_mode
+        else auto_cpufreq_config["standard_config"]
+    )
+    source_file = getAbsPath(profile_name)
+    destination_file = auto_cpufreq_config["system_config"]
+
+    if sync_auto_cpufreq_config(source_file, destination_file):
+        logging.info(f"Installed auto-cpufreq profile: {profile_name}")
+    else:
+        logging.info(f"Auto-cpufreq profile already current: {profile_name}")
+
+    governor_override = (
+        "powersave"
+        if current_execution_mode in BATTERY_EXECUTION_MODES
+        else "reset"
+    )
+    turbo_override = "never" if closed_lid_battery_mode else "auto"
+    execute_command(
+        f"auto-cpufreq --force={governor_override}",
+        timeout=10,
+        raise_on_error=True,
+    )
+    execute_command(
+        f"auto-cpufreq --turbo={turbo_override}",
+        timeout=10,
+        raise_on_error=True,
+    )
 
 
 def should_execute(execution_state, current_execution_mode, config):
@@ -161,23 +252,35 @@ def main():
     history.add_entry(battery.get_charge())
     history.save()
 
+    lid_closed = read_lid_closed(config["lid_state_file"])
+    ac_connected = read_ac_connected(config["ac_state_file"])
     charge_direction = history.get_charge_direction()
     is_on_battery = (
         charge_direction == -1
         if charge_direction != 0
-        else (execution_state["last_execution_mode"] == "onBattery")
+        else (execution_state["last_execution_mode"] in BATTERY_EXECUTION_MODES)
     )
 
-    mode_config = config["battery_mode"] if is_on_battery else config["ac_mode"]
-    recurring_commands = mode_config["commands"]["recurring"]
-    one_time_commands = mode_config["commands"]["oneTime"]
-    current_execution_mode = "onBattery" if is_on_battery else "onAC"
+    current_execution_mode = select_execution_mode(
+        lid_closed,
+        ac_connected,
+        is_on_battery,
+        execution_state["last_execution_mode"],
+    )
+    if current_execution_mode == "onBatteryLidClosed":
+        recurring_commands = []
+        one_time_commands = []
+    else:
+        mode_config = config["battery_mode"] if is_on_battery else config["ac_mode"]
+        recurring_commands = mode_config["commands"]["recurring"]
+        one_time_commands = mode_config["commands"]["oneTime"]
 
     execute_one_time, current_time, time_elapsed = should_execute(
         execution_state, current_execution_mode, config
     )
 
     if execute_one_time:
+        apply_auto_cpufreq_policy(config, current_execution_mode)
         execute_commands(
             [[replace_placeholders(cmd[0]), cmd[1]] for cmd in one_time_commands]
         )
@@ -189,15 +292,11 @@ def main():
             }
         )
         state_manager.write_state(execution_state)
-        logging.info(
-            f"Executed ALL commands in {'battery' if is_on_battery else 'AC'} mode"
-        )
+        logging.info(f"Executed ALL commands in {current_execution_mode} mode")
     else:
-        logging.info(
-            f"Executed recurring commands in {'battery' if is_on_battery else 'AC'} mode"
-        )
+        logging.info(f"Executed recurring commands in {current_execution_mode} mode")
 
-    if is_screen_on_and_unlocked():
+    if recurring_commands and is_screen_on_and_unlocked():
         execute_commands(
             [[replace_placeholders(cmd[0]), cmd[1]] for cmd in recurring_commands]
         )

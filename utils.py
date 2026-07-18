@@ -28,7 +28,7 @@ def getAbsPath(relPath):
 
 
 # Command Execution
-def execute_command(command, timeout=2):
+def execute_command(command, timeout=2, raise_on_error=False):
     timeout = int(timeout)
     try:
         logging.info(f"Executing command: {command}")
@@ -38,18 +38,32 @@ def execute_command(command, timeout=2):
             text=True,
             capture_output=True,
         )
-        output = result.stdout.strip()
-        if result.returncode != 0:
-            logging.error(
-                f"Command failed with status {result.returncode}: {result.stderr}"
-            )
     except subprocess.TimeoutExpired as e:
         logging.warning(f"Command timed out after {timeout} seconds")
+        if raise_on_error:
+            raise
         output = e.stdout if e.stdout else ""
+        return output if isinstance(output, str) else ""
     except Exception as e:
         logging.error(f"Command execution error: {type(e).__name__}")
+        if raise_on_error:
+            raise
         output = ""
-    return output if isinstance(output, str) else ""
+        return output
+
+    output = result.stdout.strip()
+    if result.returncode != 0:
+        logging.error(
+            f"Command failed with status {result.returncode}: {result.stderr}"
+        )
+        if raise_on_error:
+            raise subprocess.CalledProcessError(
+                result.returncode,
+                command,
+                output=result.stdout,
+                stderr=result.stderr,
+            )
+    return output
 
 
 # Battery Status Functions
