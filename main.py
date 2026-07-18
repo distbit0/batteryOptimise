@@ -1,4 +1,5 @@
 import argparse
+import asyncio
 import json
 import logging
 import os
@@ -10,6 +11,8 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 import psutil
+from dbus_next.aio import MessageBus
+from dbus_next.constants import BusType
 
 from utils import (
     BatteryStatus,
@@ -23,8 +26,11 @@ from utils import (
 )
 
 BATTERY_EXECUTION_MODES = {"onBattery", "onBatteryLidClosed"}
-LID_POLL_SECONDS = 1
 DISPLAY_OFF_DELAY_SECONDS = 0.5
+LOGIN1_BUS_NAME = "org.freedesktop.login1"
+LOGIN1_OBJECT_PATH = "/org/freedesktop/login1"
+LOGIN1_MANAGER_INTERFACE = "org.freedesktop.login1.Manager"
+DBUS_PROPERTIES_INTERFACE = "org.freedesktop.DBus.Properties"
 
 
 def replace_placeholders(command):
@@ -63,19 +69,58 @@ def lock_screen_and_turn_off():
     )
 
 
-def monitor_lid(lid_state_file):
+async def connect_to_logind():
+    bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+    introspection = await bus.introspect(LOGIN1_BUS_NAME, LOGIN1_OBJECT_PATH)
+    login1 = bus.get_proxy_object(
+        LOGIN1_BUS_NAME,
+        LOGIN1_OBJECT_PATH,
+        introspection,
+    )
+    return (
+        bus,
+        login1.get_interface(LOGIN1_MANAGER_INTERFACE),
+        login1.get_interface(DBUS_PROPERTIES_INTERFACE),
+    )
+
+
+async def read_logind_lid_closed():
+    bus, login1_manager, _ = await connect_to_logind()
+    try:
+        return await login1_manager.get_lid_closed()
+    finally:
+        bus.disconnect()
+        await bus.wait_for_disconnect()
+
+
+async def monitor_lid():
     configure_logging("lid_monitor")
-    logging.info(f"Monitoring lid state at {lid_state_file}")
+    logging.info("Listening for systemd-logind lid state changes")
+    bus, login1_manager, properties = await connect_to_logind()
+    lid_states = asyncio.Queue()
     lid_was_closed = False
 
+    def queue_lid_state(interface_name, changed_properties, _):
+        lid_closed = changed_properties.get("LidClosed")
+        if interface_name == LOGIN1_MANAGER_INTERFACE and lid_closed is not None:
+            lid_states.put_nowait(lid_closed.value)
+
+    properties.on_properties_changed(queue_lid_state)
+
     try:
+        lid_states.put_nowait(await login1_manager.get_lid_closed())
+        disconnect_task = asyncio.create_task(bus.wait_for_disconnect())
+        disconnect_task.add_done_callback(lambda _: lid_states.put_nowait(None))
+
         while True:
-            lid_is_closed = read_lid_closed(lid_state_file)
+            lid_is_closed = await lid_states.get()
+            if lid_is_closed is None:
+                await disconnect_task
+                raise ConnectionError("Disconnected from the system D-Bus")
             if lid_is_closed and not lid_was_closed:
                 logging.info("Lid closed; locking screen and turning off display")
                 lock_screen_and_turn_off()
             lid_was_closed = lid_is_closed
-            time.sleep(LID_POLL_SECONDS)
     except Exception:
         logging.exception("Lid monitor stopped after a failure")
         raise
@@ -354,7 +399,7 @@ def parse_arguments(arguments=None):
 if __name__ == "__main__":
     arguments = parse_arguments()
     if arguments.command == "monitor-lid":
-        monitor_lid(load_config()["lid_state_file"])
+        asyncio.run(monitor_lid())
     elif os.geteuid() != 0:
         logging.error("This script must be run as root")
         exit(1)

@@ -1,3 +1,4 @@
+import asyncio
 import configparser
 import json
 import tempfile
@@ -10,6 +11,7 @@ from main import (
     parse_arguments,
     read_ac_connected,
     read_lid_closed,
+    read_logind_lid_closed,
     select_execution_mode,
     should_execute,
     sync_auto_cpufreq_config,
@@ -109,6 +111,12 @@ class ClosedLidPolicyTests(unittest.TestCase):
 
         self.assertEqual(parse_arguments(exec_start[-1:]).command, "monitor-lid")
         self.assertEqual(service["Service"]["Restart"], "on-failure")
+
+    def test_logind_lid_state_matches_current_hardware_state(self):
+        self.assertEqual(
+            asyncio.run(read_logind_lid_closed()),
+            read_lid_closed(self.config["lid_state_file"]),
+        )
 
     def test_rejects_real_non_state_file_contents(self):
         config_file = str(PROJECT_DIRECTORY / "config.json")

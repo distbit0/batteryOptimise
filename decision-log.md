@@ -14,6 +14,7 @@ it out of both AC and battery policy.
 
 ## Lid-close desktop lock ownership
 
-`battery-lid-lock.service` owns lid-state monitoring and the XFCE lock/DPMS
-actions. It runs throughout the graphical session; the separate lid-close
-inhibitor only suppresses logind poweroff and must release if this monitor fails.
+`battery-lid-lock.service` subscribes to systemd-logind's `LidClosed` D-Bus
+property and owns the XFCE lock/DPMS actions without polling. It runs throughout
+the graphical session; the separate lid-close inhibitor only suppresses logind
+poweroff and must release if this monitor fails.
