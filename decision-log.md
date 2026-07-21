@@ -17,4 +17,6 @@ it out of both AC and battery policy.
 `battery-lid-lock.service` subscribes to systemd-logind's `LidClosed` D-Bus
 property and owns the XFCE lock/DPMS actions without polling. It runs throughout
 the graphical session; the separate lid-close inhibitor only suppresses logind
-poweroff and must release if this monitor fails.
+poweroff and must release if this monitor fails. The service declares the local
+LightDM X11 display and authority file explicitly because the lingering user
+manager can start `graphical-session.target` before XFCE imports its environment.

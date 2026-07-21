@@ -108,9 +108,14 @@ class ClosedLidPolicyTests(unittest.TestCase):
         service = configparser.ConfigParser(interpolation=None)
         service.read(PROJECT_DIRECTORY / "battery-lid-lock.service")
         exec_start = service["Service"]["ExecStart"].split()
+        environment = service["Service"]["Environment"].split()
 
         self.assertEqual(parse_arguments(exec_start[-1:]).command, "monitor-lid")
         self.assertEqual(service["Service"]["Restart"], "on-failure")
+        self.assertEqual(
+            environment,
+            ["DISPLAY=:0", "XAUTHORITY=/run/lightdm/%u/xauthority"],
+        )
 
     def test_logind_lid_state_matches_current_hardware_state(self):
         self.assertEqual(

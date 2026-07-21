@@ -5,6 +5,7 @@ After=graphical-session.target
 
 [Service]
 Type=simple
+Environment=DISPLAY=:0 XAUTHORITY=/run/lightdm/%u/xauthority
 ExecStart=/usr/bin/uv run --frozen --env-file %h/dev/batteryOptimise/.env --project %h/dev/batteryOptimise %h/dev/batteryOptimise/main.py monitor-lid
 Restart=on-failure
 RestartSec=5
