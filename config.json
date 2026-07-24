@@ -16,10 +16,6 @@
         [
           "echo $(($(cat /sys/class/backlight/*/max_brightness) * 2 / 20)) | sudo tee /sys/class/backlight/*/brightness",
           1
-        ],
-        [
-          "sed -i 's/AutoEnable=false/AutoEnable=true/' /etc/bluetooth/main.conf || :",
-          1
         ]
       ]
     }
